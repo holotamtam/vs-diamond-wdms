@@ -12,6 +12,13 @@ Last Modified On: February 11, 2025
 -------------------------------------------------------------------------------------
 */
 
+
+/* 
+npm install react-scripts
+npm install react-calendars
+npm install react-router-dom
+ */
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Index from './pages/index/Index';
 import NoPage from './pages/NoPage/NoPage';
