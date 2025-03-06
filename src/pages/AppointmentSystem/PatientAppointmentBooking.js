@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from "react"; // Import React and hooks for state and effect management
-import Calendar from "react-calendar"; // Import Calendar component for date selection
-import "react-calendar/dist/Calendar.css"; // Import default styles for the Calendar component
-import { db } from "../../backend/firebaseConfig"; // Import the Firebase database
-import { ref, push, onValue, remove, update } from "firebase/database";   // Import Firebase database functions
+import React, { useState, useEffect } from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import { db } from "../../backend/firebaseConfig";
+import { ref, push, onValue, remove, update } from "firebase/database";
 import PatientInsuranceForm from "../AppointmentSystem/PatientInsuranceForm";
-import Modal from "react-modal";  // Import Modal component for modals
+import Modal from "react-modal";
+import ServicesList, { servicesList } from "../../components/ServicesList"; // Import the ServicesList component and servicesList array
 
-Modal.setAppElement("#root");   // Set the root element for the Modal 
+Modal.setAppElement("#root");
 
 const PatientAppointmentBooking = () => {
-
-  // State variables 
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -25,18 +24,6 @@ const PatientAppointmentBooking = () => {
   const [insuranceDetails, setInsuranceDetails] = useState(null);
   const [editingAppointmentId, setEditingAppointmentId] = useState(null);
 
-  // List of available services with their estimated times (in minutes)
-  const servicesList = [
-    
-    { name: "Dental Bonding", time: 45 },
-    { name: "Dental Crowns", time: 75 },
-    { name: "Teeth Whitening", time: 45 },
-    { name: "Tooth Extraction", time: 30 },
-    { name: "Cosmetic Fillings", time: 45 },
-    { name: "Dental Veneers", time: 90 },
-    { name: "Dentures", time: 60 },
-  ];
-
   // Clinic office hours
   const officeStartTime = 9 * 60; // 9:00 AM in minutes
   const officeEndTime = 17 * 60; // 5:00 PM in minutes
@@ -47,7 +34,7 @@ const PatientAppointmentBooking = () => {
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     }
-    setLoading(false);  
+    setLoading(false);
   }, []);
 
   // Fetch appointments for the selected date
@@ -60,7 +47,7 @@ const PatientAppointmentBooking = () => {
       const data = snapshot.val();
       setAppointments(data ? Object.entries(data).map(([id, value]) => ({ id, ...value })) : []);
     });
-  }, [selectedDate]); // Re-run the effect when the selected date changes
+  }, [selectedDate]);
 
   // Handle date change
   const handleDateChange = (date) => setSelectedDate(date);
@@ -186,7 +173,6 @@ const PatientAppointmentBooking = () => {
       status: "Pending",
       insurance: hasInsurance ? "Yes" : "No",
     };
-    
 
     // Add insurance details if available
     if (insuranceData) {
@@ -209,49 +195,47 @@ const PatientAppointmentBooking = () => {
   // Handle appointment cancellation
   const handleCancelAppointment = async (id) => {
     if (!window.confirm("Do you want to cancel your appointment?")) return;
-  
+
     const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-  
+
     try {
       await remove(appointmentRef);
-  
+
       // Fetch remaining appointments after deletion
       const updatedRef = ref(db, `appointments/${formattedDate}`);
       onValue(updatedRef, async (snapshot) => {
         const data = snapshot.val();
         let updatedAppointments = data ? Object.entries(data).map(([id, value]) => ({ id, ...value })) : [];
-  
+
         // Sort appointments by start time
         updatedAppointments.sort((a, b) => {
           const aStart = parseInt(a.time.split(":")[0]) * 60 + parseInt(a.time.split(":")[1]);
           const bStart = parseInt(b.time.split(":")[0]) * 60 + parseInt(b.time.split(":")[1]);
           return aStart - bStart;
         });
-  
+
         let lastEndTime = officeStartTime;
-        
+
         // Adjust the start and end times for remaining appointments
         for (const appointment of updatedAppointments) {
           const newStartTime = lastEndTime;
           const newEndTime = newStartTime + appointment.duration;
-          
+
           await update(ref(db, `appointments/${formattedDate}/${appointment.id}`), {
             time: `${Math.floor(newStartTime / 60)}:${newStartTime % 60 === 0 ? "00" : newStartTime % 60}`,
             endTime: `${Math.floor(newEndTime / 60)}:${newEndTime % 60 === 0 ? "00" : newEndTime % 60}`,
           });
-  
+
           lastEndTime = newEndTime;
         }
       }, { onlyOnce: true });
-  
+
       setBookingStatus("Appointment canceled and times adjusted.");
     } catch (error) {
       setBookingStatus("Error canceling appointment.");
     }
   };
-  
-  
 
   // Handle insurance confirmation
   const handleInsuranceConfirm = (hasInsurance) => {
@@ -314,13 +298,7 @@ const PatientAppointmentBooking = () => {
             {selectedServices.length > 0 ? selectedServices.join(", ") : "Select Services"} {dropdownOpen ? "▲" : "▼"}
           </button>
           {dropdownOpen && (
-            <ul style={{ border: "1px solid #000", padding: "5px", listStyle: "none", width: "100%", maxHeight: "200px", overflowY: "auto" }}>
-              {servicesList.map((service, index) => (
-                <li key={index} onClick={() => toggleService(service.name)} style={{ cursor: "pointer", background: selectedServices.includes(service.name) ? "#ddd" : "#fff", padding: "5px" }}>
-                  {service.name}
-                </li>
-              ))}
-            </ul>
+            <ServicesList selectedServices={selectedServices} toggleService={toggleService} />
           )}
         </div>
 
