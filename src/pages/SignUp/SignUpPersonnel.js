@@ -3,6 +3,11 @@ import app from "../../backend/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { getDatabase, ref, set, push } from "firebase/database";
 import SignUpForm from "../../components/SignUpForm";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword,
+  fetchSignInMethodsForEmail, 
+} from "firebase/auth";
 
 const SignUpPersonnel = () => {
   const [personnelAuthStep, setPersonnelAuthStep] = useState(false);
@@ -10,6 +15,7 @@ const SignUpPersonnel = () => {
   const [password, setPassword] = useState("");
 
   const navigate = useNavigate();
+  const auth = getAuth(app);
 
   const [email, setEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
@@ -31,7 +37,7 @@ const SignUpPersonnel = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const missingFields = [];
@@ -77,31 +83,47 @@ const SignUpPersonnel = () => {
       return;
     }
 
-    alert(`Registration successful for Personnel`);
+    try {
 
-    const saveData = async () => {
+      /*
+      // Check if the email is already in use
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length > 0) {
+        alert("This email is already in use. Please use a different email.");
+        return;
+      }
+      */
+
+      // Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
+      const user = userCredential.user;
+      
+      // Save additional user info in the Realtime Database
       const db = getDatabase(app);
       const newDocRef = push(ref(db, "users/Personnel"));
-      try {
-        await set(newDocRef, {
-          email,
-          userPassword,
-          firstName,
-          middleName,
-          lastName,
-          address,
-          contactNumber,
-          civilStatus,
-          birthDate,
-          age
-        });
-        navigate("/dashboardPersonnel");
-      } catch (error) {
-        alert("Error saving data: " + error.message);
-      }
-    };
+      await set(newDocRef, {
+        uid: user.uid,
+        email,
+        userPassword,
+        firstName,
+        middleName,
+        lastName,
+        address,
+        contactNumber,
+        civilStatus,
+        birthDate,
+        age,
+      });
 
-    saveData();
+      alert("Registration successful for Personnel");
+      navigate("/dashboardPersonnel");
+    } catch (error) {
+      // If the error is due to the email already in use, alert and exit.
+      if (error.code === "auth/email-already-in-use") {
+        alert("This email is already in use. Please use a different email or sign in.");
+        return;
+      }
+    }
   };
 
   return (

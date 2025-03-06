@@ -1,62 +1,63 @@
 import React, { useState } from "react";
-import app from "../../backend/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import app from "../../backend/firebaseConfig";
 import { getDatabase, ref, get } from "firebase/database";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const auth = getAuth(app);
 
   const handleSignIn = async () => {
-    const db = getDatabase(app);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
+      alert("Please provide both email and password.");
+      return;
+    }
+
+    // Log input values for debugging.
+    console.log("Attempting sign in with email:", trimmedEmail);
+    console.log("Password length:", password.length);
 
     try {
-      // References for both Patient and Personnel
+      // Sign in with Firebase Auth using email and password.
+      const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
+      console.log("Sign in successful, userCredential:", userCredential);
+      const user = userCredential.user;
+      
+      // Now determine the user type from the Realtime Database using the user's uid.
+      const db = getDatabase(app);
       const patientRef = ref(db, "users/Patient");
       const personnelRef = ref(db, "users/Personnel");
 
-      // Get data from both nodes
-      const [patientSnap, personnelSnap] = await Promise.all([
-        get(patientRef),
-        get(personnelRef),
-      ]);
-
-      let user = null;
+      const [patientSnap, personnelSnap] = await Promise.all([get(patientRef), get(personnelRef)]);
       let userType = "";
 
-      // Check in Patient node
       if (patientSnap.exists()) {
         const patients = Object.values(patientSnap.val());
-        user = patients.find(
-          (patient) => patient.email === email && patient.userPassword === password
-        );
-        if (user) userType = "Patient";
-      }
-
-      // If not found in Patient, check Personnel
-      if (!user && personnelSnap.exists()) {
-        const personnel = Object.values(personnelSnap.val());
-        user = personnel.find(
-          (person) => person.email === email && person.userPassword === password
-        );
-        if (user) userType = "Personnel";
-      }
-
-      // Handle Sign In Results
-      if (user) {
-        alert(`Sign in successful as ${userType}!`);
-        if (userType === "Patient") {
-          navigate("/DashboardPatient");
-        } else if (userType === "Personnel") {
-          navigate("/DashboardPersonnel");
+        if (patients.find(record => record.uid === user.uid)) {
+          userType = "Patient";
         }
+      }
+      if (!userType && personnelSnap.exists()) {
+        const personnels = Object.values(personnelSnap.val());
+        if (personnels.find(record => record.uid === user.uid)) {
+          userType = "Personnel";
+        }
+      }
+
+      if (userType) {
+        alert(`Sign in successful as ${userType}!`);
+        navigate(userType === "Patient" ? "/dashboardPatient" : "/dashboardPersonnel");
       } else {
-        alert("Invalid email or password.");
+        alert("User type not determined. Please contact support.");
       }
     } catch (error) {
       console.error("Error signing in:", error);
-      alert("An error occurred. Please try again.");
+      // This alert will show the error code and message.
+      alert(`Error signing in (${error.code}): ${error.message}`);
     }
   };
 
@@ -77,8 +78,6 @@ const SignIn = () => {
       />
       <button onClick={handleSignIn}>Sign In</button>
     </div>
-
-  
   );
 };
 
