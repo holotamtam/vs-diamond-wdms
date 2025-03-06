@@ -26,16 +26,6 @@ const PatientAppointmentBooking = () => {
    const [insuranceDetails, setInsuranceDetails] = useState(null);
    const [editingAppointmentId, setEditingAppointmentId] = useState(null);
  
-   // List of available services with their estimated times (in minutes)
-   const servicesList = [
-     { name: "Dental Bonding", time: 45 },
-     { name: "Dental Crowns", time: 75 },
-     { name: "Teeth Whitening", time: 45 },
-     { name: "Tooth Extraction", time: 30 },
-     { name: "Cosmetic Fillings", time: 45 },
-     { name: "Dental Veneers", time: 90 },
-     { name: "Dentures", time: 60 },
-   ];
  
    // Clinic office hours (in minutes)
    const officeStartTime = 9 * 60; // 9:00 AM
