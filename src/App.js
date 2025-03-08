@@ -30,6 +30,7 @@ import DashboardPatient from './pages/dashboard/DashboardPatient';
 import DashboardPersonnel from './pages/dashboard/DashboardPersonnel';
 import PatientAppointmentBooking from './pages/AppointmentSystem/PatientAppointmentBooking';
 import ManageAppointments from './pages/AppointmentSystem/ManageAppointment';
+import PatientRecord from './pages/PatientRecordSystem/PatientRecord';
 
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
           <Route path='DashboardPersonnel' element={<DashboardPersonnel />}/>
           <Route path='ManageAppointment' element={<ManageAppointments/>}/>
           <Route path='PatientAppointmentBooking' element={<PatientAppointmentBooking />}/>
+          <Route path='PatientRecord' element={<PatientRecord />}/>
           
         </Routes>
       </BrowserRouter>

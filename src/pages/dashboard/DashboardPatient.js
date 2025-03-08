@@ -15,6 +15,7 @@ const DashboardPatient = () => {
   return (
     <div>
       <Link to="/PatientAppointmentBooking"><button>Book Appointment</button></Link>
+      <Link to="/PatientRecord"><button>Treatment History</button></Link>
       <button onClick={handleLogout}>Logout</button>
     </div>
   );
