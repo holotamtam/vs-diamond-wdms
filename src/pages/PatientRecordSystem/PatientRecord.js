@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, onValue } from "firebase/database";
+import ViewInsurance from "../../components/ViewInsurance";
 
 const PatientRecord = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [insuranceDetails, setInsuranceDetails] = useState(null);
+  const [showInsuranceForm, setShowInsuranceForm] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -42,8 +45,21 @@ const PatientRecord = () => {
     });
   };
 
+  const handleViewInsuranceDetails = (appointment) => {
+    setInsuranceDetails(appointment.insuranceDetails);
+    setShowInsuranceForm(true);
+  };
+
+  const handleInsuranceClose = () => {
+    setShowInsuranceForm(false);
+    setInsuranceDetails(null);
+  };
+
   return (
     <div>
+      <button>
+        <a href="/DashboardPatient">Go Back to Dashboard</a>
+      </button>
       <h2>Completed Appointments</h2>
       {appointments.length === 0 ? (
         <p>No completed appointments.</p>
@@ -65,10 +81,28 @@ const PatientRecord = () => {
               <p><strong>Date:</strong> {appointment.date}</p>
               <p><strong>Time:</strong> {appointment.time} - {appointment.endTime}</p>
               <p><strong>Services:</strong> {appointment.services.join(", ")}</p>
+              <button
+                      onClick={() => handleViewInsuranceDetails(appointment)}
+                      style={{
+                        background: "blue",
+                        color: "white",
+                        border: "none",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                      }}
+                    >
+                      View Insurance Details
+                    </button>
             </div>
           ))}
         </div>
       )}
+      <ViewInsurance
+        isOpen={showInsuranceForm}
+        onClose={handleInsuranceClose}
+        insuranceDetails={insuranceDetails}
+      />
     </div>
   );
 };

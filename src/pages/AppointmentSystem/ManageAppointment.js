@@ -3,7 +3,7 @@ import { db } from "../../backend/firebaseConfig";
 import Calendar from "react-calendar";
 import { ref, onValue, remove, update } from "firebase/database";
 import Modal from "react-modal";
-import PatientInsuranceForm from "./PatientInsuranceForm";
+import ViewInsurance from "../../components/ViewInsurance";
 import ServicesList from "../../components/ServicesList"; // Import the ServicesList component
 
 Modal.setAppElement("#root");
@@ -50,26 +50,11 @@ const ManageAppointments = () => {
   // Handle viewing insurance details
   const handleViewInsuranceDetails = (appointment) => {
     setInsuranceDetails(appointment.insuranceDetails);
-    setEditingAppointmentId(appointment.id);
     setShowInsuranceForm(true);
   };
 
-  // Handle insurance form submission
-  const handleInsuranceFormSubmit = async (formData) => {
-    if (editingAppointmentId) {
-      const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
-      const appointmentRef = ref(db, `appointments/${formattedDate}/${editingAppointmentId}`);
-      await update(appointmentRef, { insuranceDetails: formData });
-      setEditingAppointmentId(null);
-      setInsuranceDetails(null);
-    }
-    setShowInsuranceForm(false);
-  };
-
-  // Handle closing the insurance form
   const handleInsuranceClose = () => {
     setShowInsuranceForm(false);
-    setEditingAppointmentId(null);
     setInsuranceDetails(null);
   };
 
@@ -154,6 +139,10 @@ const ManageAppointments = () => {
   };
 
   return (
+    <div>
+      <button>
+        <a href="/DashboardPersonnel">Go Back to Dashboard</a>
+      </button>
     <div style={{ display: "flex", justifyContent: "center", gap: "30px", padding: "20px" }}>
       <div style={{ width: "350px" }}>
         <h1>Manage Appointments</h1>
@@ -182,7 +171,7 @@ const ManageAppointments = () => {
           </ul>
         </div>
       </div>
-
+      </div>
       <Modal
         isOpen={showInsuranceForm}
         onRequestClose={handleInsuranceClose}
@@ -201,11 +190,11 @@ const ManageAppointments = () => {
           },
         }}
       >
-        <PatientInsuranceForm
-          onSubmit={handleInsuranceFormSubmit}
-          onClose={handleInsuranceClose}
-          initialData={insuranceDetails || {}}
-        />
+        <ViewInsurance
+        isOpen={showInsuranceForm}
+        onClose={handleInsuranceClose}
+        insuranceDetails={insuranceDetails}
+      />
       </Modal>
 
       <Modal
