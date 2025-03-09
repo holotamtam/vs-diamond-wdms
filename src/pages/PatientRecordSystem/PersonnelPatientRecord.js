@@ -11,8 +11,11 @@ const PersonnelPatientRecord = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientRecords, setPatientRecords] = useState([]);
   const [patients, setPatients] = useState([]);
+  const [filteredPatients, setFilteredPatients] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [insuranceDetails, setInsuranceDetails] = useState(null);
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
+  const [selectedPatientName, setSelectedPatientName] = useState({ firstName: "", middleName: "", lastName: "" });
 
   useEffect(() => {
     fetchAllAppointments();
@@ -47,16 +50,19 @@ const PersonnelPatientRecord = () => {
         let patientList = [];
 
         Object.entries(allUsers).forEach(([id, user]) => {
-          patientList.push(user.email);
+          patientList.push({ email: user.email, firstName: user.firstName, middleName: user.middleName, lastName: user.lastName });
         });
 
         setPatients(patientList);
+        setFilteredPatients(patientList);
       }
     });
   };
 
   const handlePatientClick = (email) => {
+    const patient = patients.find((patient) => patient.email === email);
     setSelectedPatient(email);
+    setSelectedPatientName({ firstName: patient.firstName, middleName: patient.middleName, lastName: patient.lastName });
     const patientAppointments = appointments.filter(
       (appointment) => appointment.userId === email
     );
@@ -81,16 +87,46 @@ const PersonnelPatientRecord = () => {
     return `${formattedHour}:${formattedMinute} ${ampm}`;
   };
 
+  const handleSearch = (event) => {
+    const term = event.target.value.toLowerCase();
+    setSearchTerm(term);
+    const filtered = patients.filter((patient) => {
+      const patientAppointments = appointments.filter(
+        (appointment) => appointment.userId === patient.email
+      );
+      return (
+        patient.email.toLowerCase().includes(term) ||
+        patient.firstName.toLowerCase().includes(term) ||
+        patient.middleName.toLowerCase().includes(term) ||
+        patient.lastName.toLowerCase().includes(term) ||
+        patientAppointments.some((appointment) =>
+          appointment.date.toLowerCase().includes(term) ||
+          appointment.services.some((service) =>
+            service.toLowerCase().includes(term)
+          )
+        )
+      );
+    });
+    setFilteredPatients(filtered);
+  };
+
   return (
     <div>
       <button>
         <a href="/DashboardPersonnel">Go Back to Dashboard</a>
       </button>
       <h2>Patient Records</h2>
+      <input
+        type="text"
+        placeholder="Search"
+        value={searchTerm}
+        onChange={handleSearch}
+        style={{ marginBottom: "20px", padding: "10px", width: "30%" }}
+      />
       {selectedPatient ? (
         <div>
           <button onClick={() => setSelectedPatient(null)}>Back to Patient List</button>
-          <h3>Records for {selectedPatient}</h3>
+          <h3>Records for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName} ({selectedPatient})</h3>
           {patientRecords.length === 0 ? (
             <p>No appointments found for this patient.</p>
           ) : (
@@ -135,14 +171,14 @@ const PersonnelPatientRecord = () => {
         </div>
       ) : (
         <div>
-          {patients.length === 0 ? (
+          {filteredPatients.length === 0 ? (
             <p>No patients found.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {patients.map((email) => (
+              {filteredPatients.map((patient) => (
                 <button
-                  key={email}
-                  onClick={() => handlePatientClick(email)}
+                  key={patient.email}
+                  onClick={() => handlePatientClick(patient.email)}
                   style={{
                     padding: "10px",
                     border: "1px solid #ddd",
@@ -151,7 +187,7 @@ const PersonnelPatientRecord = () => {
                     textAlign: "left",
                   }}
                 >
-                  {email}
+                  {patient.email}
                 </button>
               ))}
             </div>
