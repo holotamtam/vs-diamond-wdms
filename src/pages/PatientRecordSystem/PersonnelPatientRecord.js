@@ -57,6 +57,9 @@ const PersonnelPatientRecord = () => {
             firstName: user.firstName,
             middleName: user.middleName,
             lastName: user.lastName,
+            birthday: user.birthday,
+            age: user.age,
+            address: user.address,
             civilStatus: user.civilStatus,
             occupation: user.occupation,
           });
