@@ -267,6 +267,8 @@ const ManageAppointments = () => {
             Dentist Remarks:
             <input
               type="text"
+              value={editFormData.dentistRemarks}
+              onChange={(e) => setEditFormData({ ...editFormData, dentistRemarks:  e.target.value})}
             />
           </label>
           <button type="submit">Save</button>

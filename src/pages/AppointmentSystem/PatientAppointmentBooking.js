@@ -27,7 +27,6 @@ const PatientAppointmentBooking = () => {
   const [insuranceDetails, setInsuranceDetails] = useState(null);
   const [editingAppointmentId, setEditingAppointmentId] = useState(null);
  
- 
   // Clinic office hours (in minutes)
   const officeStartTime = 9 * 60; // 9:00 AM
   const officeEndTime = 17 * 60;  // 5:00 PM
@@ -120,7 +119,7 @@ const PatientAppointmentBooking = () => {
         lastEndTime = appointmentEnd;
       }
     });
-  
+
  
     // Create slots from lastEndTime until officeEndTime
     for (let start = lastEndTime; start + totalDuration <= officeEndTime; start += 30) {
