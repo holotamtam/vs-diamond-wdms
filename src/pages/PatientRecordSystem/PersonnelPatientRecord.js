@@ -16,6 +16,8 @@ const PersonnelPatientRecord = () => {
   const [insuranceDetails, setInsuranceDetails] = useState(null);
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
   const [selectedPatientName, setSelectedPatientName] = useState({ firstName: "", middleName: "", lastName: "" });
+  const [selectedPatientInfo, setSelectedPatientInfo] = useState(null);
+  const [showTreatmentHistory, setShowTreatmentHistory] = useState(false);
 
   useEffect(() => {
     fetchAllAppointments();
@@ -50,7 +52,14 @@ const PersonnelPatientRecord = () => {
         let patientList = [];
 
         Object.entries(allUsers).forEach(([id, user]) => {
-          patientList.push({ email: user.email, firstName: user.firstName, middleName: user.middleName, lastName: user.lastName });
+          patientList.push({
+            email: user.email,
+            firstName: user.firstName,
+            middleName: user.middleName,
+            lastName: user.lastName,
+            civilStatus: user.civilStatus,
+            occupation: user.occupation,
+          });
         });
 
         setPatients(patientList);
@@ -63,6 +72,7 @@ const PersonnelPatientRecord = () => {
     const patient = patients.find((patient) => patient.email === email);
     setSelectedPatient(email);
     setSelectedPatientName({ firstName: patient.firstName, middleName: patient.middleName, lastName: patient.lastName });
+    setSelectedPatientInfo(patient);
     const patientAppointments = appointments.filter(
       (appointment) => appointment.userId === email
     );
@@ -77,6 +87,10 @@ const PersonnelPatientRecord = () => {
   const handleInsuranceClose = () => {
     setShowInsuranceForm(false);
     setInsuranceDetails(null);
+  };
+
+  const handleTreatmentHistoryClose = () => {
+    setShowTreatmentHistory(false);
   };
 
   const formatTime = (time) => {
@@ -126,48 +140,81 @@ const PersonnelPatientRecord = () => {
       {selectedPatient ? (
         <div>
           <button onClick={() => setSelectedPatient(null)}>Back to Patient List</button>
-          <h3>Records for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName} ({selectedPatient})</h3>
-          {patientRecords.length === 0 ? (
-            <p>No appointments found for this patient.</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {patientRecords.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "5px",
-                    background: "#f9f9f9",
-                  }}
-                >
-                  <p><strong>Date:</strong> {appointment.date}</p>
-                  <p><strong>Time:</strong> {formatTime(appointment.time)} - {formatTime(appointment.endTime)}</p>
-                  <p><strong>Services:</strong> {appointment.services.join(", ")}</p>
-                  <p><strong>Status:</strong> {appointment.status}</p>
-                  <p><strong>Bill:</strong> {appointment.bill}</p>
-                  {appointment.insuranceDetails && (
-                    <button
-                      onClick={() => handleViewInsuranceDetails(appointment)}
-                      style={{
-                        background: "blue",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                      }}
-                    >
-                      View Insurance Details
-                    </button>
-                  )}
-                </div>
-              ))}
+          <h3>Personal Information for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName} ({selectedPatient})</h3>
+          {selectedPatientInfo && (
+            <div>
+              <p><strong>Name:</strong> {selectedPatientInfo.firstName} {selectedPatientInfo.middleName} {selectedPatientInfo.lastName}</p>
+              <p><strong>Birthday:</strong> {selectedPatientInfo.birthday}</p>
+              <p><strong>Age:</strong> {selectedPatientInfo.age}</p>
+              <p><strong>Address:</strong> {selectedPatientInfo.address}</p>
+              <p><strong>Email:</strong> {selectedPatientInfo.email}</p>
+              <p><strong>Civil Status:</strong> {selectedPatientInfo.civilStatus}</p>
+              <p><strong>Occupation:</strong> {selectedPatientInfo.occupation}</p>
+              <button onClick={() => setShowTreatmentHistory(true)}>View Treatment History</button>
             </div>
           )}
+          <Modal
+            isOpen={showTreatmentHistory}
+            onRequestClose={handleTreatmentHistoryClose}
+            contentLabel="Treatment History Modal"
+            style={{
+              overlay: {
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+              },
+              content: {
+                top: '50%',
+                left: '50%',
+                right: 'auto',
+                bottom: 'auto',
+                marginRight: '-50%',
+                transform: 'translate(-50%, -50%)',
+              },
+            }}
+          >
+            <h3>Treatment History for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
+            {patientRecords.length === 0 ? (
+              <p>No appointments found for this patient.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {patientRecords.map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "10px",
+                      border: "1px solid #ddd",
+                      borderRadius: "5px",
+                      background: "#f9f9f9",
+                    }}
+                  >
+                    <p><strong>Date:</strong> {appointment.date}</p>
+                    <p><strong>Time:</strong> {formatTime(appointment.time)} - {formatTime(appointment.endTime)}</p>
+                    <p><strong>Services:</strong> {appointment.services.join(", ")}</p>
+                    <p><strong>Status:</strong> {appointment.status}</p>
+                    <p><strong>Bill:</strong> {appointment.bill}</p>
+                    {appointment.insuranceDetails && (
+                      <button
+                        onClick={() => handleViewInsuranceDetails(appointment)}
+                        style={{
+                          background: "blue",
+                          color: "white",
+                          border: "none",
+                          padding: "5px 10px",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                        }}
+                      >
+                        View Insurance Details
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <button onClick={handleTreatmentHistoryClose} style={{ marginTop: "10px" }}>Close</button>
+          </Modal>
         </div>
       ) : (
         <div>
