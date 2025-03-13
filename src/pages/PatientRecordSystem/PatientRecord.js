@@ -5,6 +5,7 @@ import { ref, onValue } from "firebase/database";
 import ViewInsurance from "../../components/ViewInsurance";
 
 const PatientRecord = () => {
+  // State variables
   const [currentUser, setCurrentUser] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [insuranceDetails, setInsuranceDetails] = useState(null);
@@ -15,8 +16,8 @@ const PatientRecord = () => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
-        fetchUserDetails(user.uid);
-        fetchCompletedAppointments(user.email);
+        fetchUserDetails(user.uid);  // Fetch patient details from database
+        fetchCompletedAppointments(user.email);  // Fetch completed appointments
       } else {
         setCurrentUser(null);
         setAppointments([]);
@@ -27,6 +28,8 @@ const PatientRecord = () => {
     return () => unsubscribe();
   }, []);
 
+  
+  // Function to fetch user details from Firebase database
   const fetchUserDetails = (userId) => {
     const patientsRef = ref(db, "users/Patient");
 
@@ -35,6 +38,7 @@ const PatientRecord = () => {
         const patients = snapshot.val();
         let userData = null;
 
+        // Iterate through patient records to find the matching user
         Object.values(patients).forEach((patient) => {
           if(patient.uid === userId){
             userData = patient;
@@ -48,6 +52,7 @@ const PatientRecord = () => {
     });
   }
 
+  // Function to fetch completed appointments from Firebase database
   const fetchCompletedAppointments = (email) => {
     const appointmentsRef = ref(db, "appointments");
 
@@ -56,6 +61,7 @@ const PatientRecord = () => {
         const allAppointments = snapshot.val();
         let completedAppointments = [];
 
+        // Iterate through all appointments and filter completed ones
         Object.entries(allAppointments).forEach(([date, dateAppointments]) => {
           Object.entries(dateAppointments).forEach(([id, appointment]) => {
             if (appointment.userId === email && appointment.status === "Completed") {
@@ -69,11 +75,13 @@ const PatientRecord = () => {
     });
   };
 
+  // Function to handle viewing insurance details
   const handleViewInsuranceDetails = (appointment) => {
     setInsuranceDetails(appointment.insuranceDetails);
     setShowInsuranceForm(true);
   };
 
+  // Function to close insurance details view
   const handleInsuranceClose = () => {
     setShowInsuranceForm(false);
     setInsuranceDetails(null);
