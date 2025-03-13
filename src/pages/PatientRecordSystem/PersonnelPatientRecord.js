@@ -3,6 +3,7 @@ import { db } from "../../backend/firebaseConfig";
 import { ref, onValue } from "firebase/database";
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
+import DentalChart from "../../components/DentalChart";
 
 Modal.setAppElement("#root");
 
@@ -18,6 +19,7 @@ const PersonnelPatientRecord = () => {
   const [selectedPatientName, setSelectedPatientName] = useState({ firstName: "", middleName: "", lastName: "" });
   const [selectedPatientInfo, setSelectedPatientInfo] = useState(null);
   const [showTreatmentHistory, setShowTreatmentHistory] = useState(false);
+  const [showDentalChart, setShowDentalChart] = useState(false);
 
   useEffect(() => {
     fetchAllAppointments();
@@ -62,6 +64,7 @@ const PersonnelPatientRecord = () => {
             address: user.address,
             civilStatus: user.civilStatus,
             occupation: user.occupation,
+            uid: id,
           });
         });
 
@@ -77,7 +80,7 @@ const PersonnelPatientRecord = () => {
     setSelectedPatientName({ firstName: patient.firstName, middleName: patient.middleName, lastName: patient.lastName });
     setSelectedPatientInfo(patient);
     const patientAppointments = appointments.filter(
-      (appointment) => appointment.userId === email
+      (appointment) => appointment.uid === email
     );
     setPatientRecords(patientAppointments);
   };
@@ -96,6 +99,10 @@ const PersonnelPatientRecord = () => {
     setShowTreatmentHistory(false);
   };
 
+  const handleDentalChartClose = () => {
+    setShowDentalChart(false);
+  };
+
   const formatTime = (time) => {
     const [hour, minute] = time.split(":").map(Number);
     const ampm = hour >= 12 ? "PM" : "AM";
@@ -109,7 +116,7 @@ const PersonnelPatientRecord = () => {
     setSearchTerm(term);
     const filtered = patients.filter((patient) => {
       const patientAppointments = appointments.filter(
-        (appointment) => appointment.userId === patient.email
+        (appointment) => appointment.uid === patient.email
       );
       return (
         patient.email.toLowerCase().includes(term) ||
@@ -154,6 +161,7 @@ const PersonnelPatientRecord = () => {
               <p><strong>Civil Status:</strong> {selectedPatientInfo.civilStatus}</p>
               <p><strong>Occupation:</strong> {selectedPatientInfo.occupation}</p>
               <button onClick={() => setShowTreatmentHistory(true)}>View Treatment History</button>
+              <button onClick={() => setShowDentalChart(true)}>View Dental Chart</button>
             </div>
           )}
           <Modal
@@ -169,6 +177,7 @@ const PersonnelPatientRecord = () => {
                 left: '50%',
                 right: 'auto',
                 bottom: 'auto',
+                width: '80%',
                 marginRight: '-50%',
                 transform: 'translate(-50%, -50%)',
               },
@@ -217,6 +226,27 @@ const PersonnelPatientRecord = () => {
               </div>
             )}
             <button onClick={handleTreatmentHistoryClose} style={{ marginTop: "10px" }}>Close</button>
+          </Modal>
+          <Modal
+            isOpen={showDentalChart}
+            onRequestClose={handleDentalChartClose}
+            contentLabel="Dental Chart Modal"
+            style={{
+              overlay: {
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+              },
+              content: {
+                top: '50%',
+                left: '50%',
+                right: 'auto',
+                bottom: 'auto',
+                marginRight: '-50%',
+                transform: 'translate(-50%, -50%)',
+              },
+            }}
+          >
+            <DentalChart uid={selectedPatientInfo.uid} />
+            <button onClick={handleDentalChartClose} style={{ marginTop: "10px" }}>Close</button>
           </Modal>
         </div>
       ) : (
