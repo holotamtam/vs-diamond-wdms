@@ -4,6 +4,7 @@ import { ref, onValue } from "firebase/database";
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
 import DentalChart from "../../components/DentalChart";
+import TreatmentHistory from "../../components/TreatmentHistory";
 
 Modal.setAppElement("#root");
 
@@ -80,7 +81,7 @@ const PersonnelPatientRecord = () => {
     setSelectedPatientName({ firstName: patient.firstName, middleName: patient.middleName, lastName: patient.lastName });
     setSelectedPatientInfo(patient);
     const patientAppointments = appointments.filter(
-      (appointment) => appointment.uid === email
+      (appointment) => appointment.userId === email && appointment.status === "Completed"
     );
     setPatientRecords(patientAppointments);
   };
@@ -116,7 +117,7 @@ const PersonnelPatientRecord = () => {
     setSearchTerm(term);
     const filtered = patients.filter((patient) => {
       const patientAppointments = appointments.filter(
-        (appointment) => appointment.uid === patient.email
+        (appointment) => appointment.userId === patient.email && appointment.status === "Completed"
       );
       return (
         patient.email.toLowerCase().includes(term) ||
@@ -184,47 +185,7 @@ const PersonnelPatientRecord = () => {
             }}
           >
             <h3>Treatment History for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
-            {patientRecords.length === 0 ? (
-              <p>No appointments found for this patient.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {patientRecords.map((appointment) => (
-                  <div
-                    key={appointment.id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "5px",
-                      background: "#f9f9f9",
-                    }}
-                  >
-                    <p><strong>Date:</strong> {appointment.date}</p>
-                    <p><strong>Time:</strong> {formatTime(appointment.time)} - {formatTime(appointment.endTime)}</p>
-                    <p><strong>Services:</strong> {appointment.services.join(", ")}</p>
-                    <p><strong>Status:</strong> {appointment.status}</p>
-                    <p><strong>Bill:</strong> {appointment.bill}</p>
-                    {appointment.insuranceDetails && (
-                      <button
-                        onClick={() => handleViewInsuranceDetails(appointment)}
-                        style={{
-                          background: "blue",
-                          color: "white",
-                          border: "none",
-                          padding: "5px 10px",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                        }}
-                      >
-                        View Insurance Details
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <TreatmentHistory appointments={patientRecords} handleViewInsuranceDetails={handleViewInsuranceDetails} />
             <button onClick={handleTreatmentHistoryClose} style={{ marginTop: "10px" }}>Close</button>
           </Modal>
           <Modal
