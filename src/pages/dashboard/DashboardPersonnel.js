@@ -20,6 +20,7 @@ const DashboardPersonnel = () => {
     <div>
         <Link to="/ManageAppointment"><button>Manage Appointment</button></Link>
         <Link to="/PersonnelPatientRecord"><button>View Patient Record</button></Link>
+        <Link to="/Inventory"><button>Inventory</button></Link>
         <button onClick={handleLogout}>Logout</button>
     </div>
 

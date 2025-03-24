@@ -16,6 +16,7 @@ const DashboardPatient = () => {
     <div>
       <Link to="/PatientAppointmentBooking"><button>Book Appointment</button></Link>
       <Link to="/PatientRecord"><button>Treatment History</button></Link>
+      <Link to="/Services"><button>View Our Services</button></Link>
       <button onClick={handleLogout}>Logout</button>
     </div>
   );

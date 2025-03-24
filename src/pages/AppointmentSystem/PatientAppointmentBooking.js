@@ -210,10 +210,10 @@ const PatientAppointmentBooking = () => {
       setBookingStatus("Appointment booked successfully!");
       console.log("Appointment booked successfully!");
       setSelectedServices([]);
-      // Reset insurance flags for the next booking attempt
+ 
       setInsuranceAsked(false);
       setShowInsuranceForm(false);
-      // Re-fetch appointments to update local state with new appointment times
+
       fetchAppointmentsForDate();
       setTimeout(() => setBookingStatus(""), 3000);
     } catch (error) {

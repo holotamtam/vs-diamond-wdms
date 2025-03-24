@@ -32,6 +32,8 @@ import PatientAppointmentBooking from './pages/AppointmentSystem/PatientAppointm
 import ManageAppointments from './pages/AppointmentSystem/ManageAppointment';
 import PatientRecord from './pages/PatientRecordSystem/PatientRecord';
 import PersonnelPatientRecord from './pages/PatientRecordSystem/PersonnelPatientRecord';
+import Services from './pages/Services/Services';
+import Inventory from './pages/InventorySystem/Inventory';
 
 
 function App() {
@@ -51,6 +53,8 @@ function App() {
           <Route path='PatientAppointmentBooking' element={<PatientAppointmentBooking />}/>
           <Route path='PatientRecord' element={<PatientRecord />}/>
           <Route path='PersonnelPatientRecord' element={<PersonnelPatientRecord />}/>
+          <Route path='Services' element={<Services />}/>
+          <Route path='Inventory' element={<Inventory />}/>
         </Routes>
       </BrowserRouter>
     </div>
