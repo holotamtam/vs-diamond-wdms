@@ -50,7 +50,7 @@ const SignIn = () => {
 
       if (userType) {
         alert(`Sign in successful as ${userType}!`);
-        navigate(userType === "Patient" ? "/dashboardPatient" : "/dashboardPersonnel");
+        navigate(userType === "Patient" ? "/DashboardPatient" : "/DashboardPersonnel");
       } else {
         alert("User type not determined. Please contact support.");
       }
@@ -62,7 +62,10 @@ const SignIn = () => {
   };
 
   return (
+
+    
     <div>
+      <button onClick={() => navigate(-1)}>Back</button>
       <h3>Sign In</h3>
       <input
         type="text"

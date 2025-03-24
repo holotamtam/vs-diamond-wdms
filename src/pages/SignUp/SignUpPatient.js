@@ -22,6 +22,7 @@ const SignUpPatient = () => {
   const [civilStatus, setCivilStatus] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
 
   const navigate = useNavigate();
   const auth = getAuth(app);
@@ -40,6 +41,7 @@ const SignUpPatient = () => {
     if (!contactNumber) missingFields.push("Contact Number");
     if (!birthDate) missingFields.push("Birthdate");
     if (!age) missingFields.push("Age");
+    if (!gender) missingFields.push("Gender");
 
     if (missingFields.length > 0) {
       alert(`Please fill in the following fields: ${missingFields.join(", ")}`);
@@ -103,10 +105,11 @@ const SignUpPatient = () => {
         civilStatus,
         birthDate,
         age,
+        gender,
       });
 
       alert("Registration successful for Patient");
-      navigate("/dashboardPatient");
+      navigate("/DashboardPatient");
     } catch (error) {
        // If the error is due to the email already in use, alert and exit.
        if (error.code === "auth/email-already-in-use") {
@@ -133,6 +136,8 @@ const SignUpPatient = () => {
         setContactNumber={setContactNumber}
         civilStatus={civilStatus}
         setCivilStatus={setCivilStatus}
+        gender={gender}
+        setGender={setGender}
         birthDate={birthDate}
         setBirthDate={setBirthDate}
         age={age}

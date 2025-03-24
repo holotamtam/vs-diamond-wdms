@@ -1,12 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const Services = () => {
-
+    const navigate = useNavigate();
     return (
         <div>
-            <button>
-                <a href="/DashboardPatient">Go Back to Dashboard</a>
-            </button>
+            <button onClick={() => navigate(-1)}>Back</button>
             <div>
                 <label style={{ marginLeft: "20px", fontWeight: "bold" }}>Basic Services:</label>
                 <ul style={{ marginTop: "0.5rem" }}>

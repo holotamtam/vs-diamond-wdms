@@ -14,6 +14,8 @@ const SignUpForm = ({
   setContactNumber,
   civilStatus,
   setCivilStatus,
+  gender,
+  setGender,
   birthDate,
   setBirthDate,
   age,
@@ -148,6 +150,18 @@ const SignUpForm = ({
             }
           }}
         />
+      </div>
+
+      <div>
+        <label>Gender</label>
+        <select
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+          >
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          </select>
       </div>
 
       <div>

@@ -28,6 +28,7 @@ const SignUpPersonnel = () => {
   const [civilStatus, setCivilStatus] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
 
   const handlePersonnelAuth = () => {
     if (username === "personnel" && password === "123456") {
@@ -39,6 +40,9 @@ const SignUpPersonnel = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;
 
     const missingFields = [];
 
@@ -62,13 +66,12 @@ const SignUpPersonnel = () => {
       return;
     }
 
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
     if (!emailPattern.test(email)) {
       alert("Invalid email. Please enter a Gmail or Yahoo email.");
       return;
     }
 
-    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;
     if (userPassword.toString().length < 8) {
       alert("Password must be at least 8 characters long.");
       return;
@@ -113,10 +116,11 @@ const SignUpPersonnel = () => {
         civilStatus,
         birthDate,
         age,
+        gender,
       });
 
       alert("Registration successful for Personnel");
-      navigate("/dashboardPersonnel");
+      navigate("/DashboardPersonnel");
     } catch (error) {
       // If the error is due to the email already in use, alert and exit.
       if (error.code === "auth/email-already-in-use") {
@@ -169,6 +173,8 @@ const SignUpPersonnel = () => {
           setBirthDate={setBirthDate}
           age={age}
           setAge={setAge}
+          gender={gender}
+          setGender={setGender}
           email={email}
           setEmail={setEmail}
           userPassword={userPassword}
