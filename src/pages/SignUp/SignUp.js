@@ -12,11 +12,7 @@ const SignUp = () => {
       <button onClick={() => navigate(-1)}>Back</button>
       
           <h2>Select Role:</h2>
-
-
-
-          <Link to="/SignUpPersonnel"><button>Personnel</button></Link>
-
+          <Link to="/SignUpDentist"><button>Personnel</button></Link>
           <Link to="/SignUpPatient"><button>Patient</button></Link>
     </div>
   );

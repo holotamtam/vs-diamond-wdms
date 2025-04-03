@@ -6,11 +6,14 @@ import SignUpForm from "../../components/SignUpForm";
 import { 
   getAuth, 
   createUserWithEmailAndPassword,
-  fetchSignInMethodsForEmail,
- } from "firebase/auth";
+  fetchSignInMethodsForEmail, 
+} from "firebase/auth";
 
+const SignUpPersonnel = () => {
 
-const SignUpPatient = () => {
+  const navigate = useNavigate();
+  const auth = getAuth(app);
+
   const [email, setEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
   const [userConfirmPassword, setUserConfirmPassword] = useState("");
@@ -24,11 +27,12 @@ const SignUpPatient = () => {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
 
-  const navigate = useNavigate();
-  const auth = getAuth(app);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;
 
     const missingFields = [];
 
@@ -41,7 +45,6 @@ const SignUpPatient = () => {
     if (!contactNumber) missingFields.push("Contact Number");
     if (!birthDate) missingFields.push("Birthdate");
     if (!age) missingFields.push("Age");
-    if (!gender) missingFields.push("Gender");
 
     if (missingFields.length > 0) {
       alert(`Please fill in the following fields: ${missingFields.join(", ")}`);
@@ -53,13 +56,12 @@ const SignUpPatient = () => {
       return;
     }
 
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
     if (!emailPattern.test(email)) {
       alert("Invalid email. Please enter a Gmail or Yahoo email.");
       return;
     }
 
-    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;
     if (userPassword.toString().length < 8) {
       alert("Password must be at least 8 characters long.");
       return;
@@ -73,7 +75,6 @@ const SignUpPatient = () => {
       alert("Passwords do not match.");
       return;
     }
-
 
     try {
 
@@ -92,7 +93,7 @@ const SignUpPatient = () => {
       
       // Save additional user info in the Realtime Database
       const db = getDatabase(app);
-      const newDocRef = push(ref(db, "users/Patient"));
+      const newDocRef = push(ref(db, "users/Personnel/ClinicStaff"));
       await set(newDocRef, {
         uid: user.uid,
         email,
@@ -108,52 +109,51 @@ const SignUpPatient = () => {
         gender,
       });
 
-      alert("Registration successful for Patient");
-      navigate("/DashboardPatient");
+      alert("Registration successful for Clinic Staff");
+      navigate("/DashboardDentist");
     } catch (error) {
-       // If the error is due to the email already in use, alert and exit.
-       if (error.code === "auth/email-already-in-use") {
+      // If the error is due to the email already in use, alert and exit.
+      if (error.code === "auth/email-already-in-use") {
         alert("This email is already in use. Please use a different email or sign in.");
         return;
       }
     }
   };
 
-
   return (
     <div>
-      <button onClick={() => navigate(-1)}>Back</button>
+        <button onClick={() => navigate(-1)}>Back</button>
 
-      <SignUpForm
-        title="Sign Up Patient"
-        firstName={firstName}
-        setFirstName={setFirstName}
-        middleName={middleName}
-        setMiddleName={setMiddleName}
-        lastName={lastName}
-        setLastName={setLastName}
-        address={address}
-        setAddress={setAddress}
-        contactNumber={contactNumber}
-        setContactNumber={setContactNumber}
-        civilStatus={civilStatus}
-        setCivilStatus={setCivilStatus}
-        gender={gender}
-        setGender={setGender}
-        birthDate={birthDate}
-        setBirthDate={setBirthDate}
-        age={age}
-        setAge={setAge}
-        email={email}
-        setEmail={setEmail}
-        userPassword={userPassword}
-        setUserPassword={setUserPassword}
-        userConfirmPassword={userConfirmPassword}
-        setUserConfirmPassword={setUserConfirmPassword}
-        handleSubmit={handleSubmit}
-      />
+        <SignUpForm
+            title="Signup as Clinic Staff"
+            firstName={firstName}
+            setFirstName={setFirstName}
+            middleName={middleName}
+            setMiddleName={setMiddleName}
+            lastName={lastName}
+            setLastName={setLastName}
+            address={address}
+            setAddress={setAddress}
+            contactNumber={contactNumber}
+            setContactNumber={setContactNumber}
+            civilStatus={civilStatus}
+            setCivilStatus={setCivilStatus}
+            birthDate={birthDate}
+            setBirthDate={setBirthDate}
+            age={age}
+            setAge={setAge}
+            gender={gender}
+            setGender={setGender}
+            email={email}
+            setEmail={setEmail}
+            userPassword={userPassword}
+            setUserPassword={setUserPassword}
+            userConfirmPassword={userConfirmPassword}
+            setUserConfirmPassword={setUserConfirmPassword}
+            handleSubmit={handleSubmit}
+        />
     </div>
   );
 };
 
-export default SignUpPatient;
+export default SignUpPersonnel;

@@ -9,7 +9,7 @@ import {
   fetchSignInMethodsForEmail, 
 } from "firebase/auth";
 
-const SignUpPersonnel = () => {
+const SignUpDentist = () => {
   const [personnelAuthStep, setPersonnelAuthStep] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -103,7 +103,7 @@ const SignUpPersonnel = () => {
       
       // Save additional user info in the Realtime Database
       const db = getDatabase(app);
-      const newDocRef = push(ref(db, "users/Personnel"));
+      const newDocRef = push(ref(db, "users/Personnel/Dentist"));
       await set(newDocRef, {
         uid: user.uid,
         email,
@@ -120,7 +120,7 @@ const SignUpPersonnel = () => {
       });
 
       alert("Registration successful for Personnel");
-      navigate("/DashboardPersonnel");
+      navigate("/DashboardDentist");
     } catch (error) {
       // If the error is due to the email already in use, alert and exit.
       if (error.code === "auth/email-already-in-use") {
@@ -132,6 +132,8 @@ const SignUpPersonnel = () => {
 
   return (
     <div>
+      <button onClick={() => navigate(-1)}>Back</button>
+
       {!personnelAuthStep ? (
         <div>
           <h3>Enter credentials | Personnel Authentication!</h3>
@@ -156,7 +158,7 @@ const SignUpPersonnel = () => {
         </div>
       ) : (
         <SignUpForm
-          title="Signup as Personnel"
+          title="Signup as Dentist"
           firstName={firstName}
           setFirstName={setFirstName}
           middleName={middleName}
@@ -188,4 +190,4 @@ const SignUpPersonnel = () => {
   );
 };
 
-export default SignUpPersonnel;
+export default SignUpDentist;

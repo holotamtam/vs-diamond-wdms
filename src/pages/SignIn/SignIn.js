@@ -30,9 +30,10 @@ const SignIn = () => {
       // Now determine the user type from the Realtime Database using the user's uid.
       const db = getDatabase(app);
       const patientRef = ref(db, "users/Patient");
-      const personnelRef = ref(db, "users/Personnel");
+      const dentistRef = ref(db, "users/Personnel/Dentist");
+      const clinicStaffRef = ref(db, "users/Personnel/ClinicStaff");
 
-      const [patientSnap, personnelSnap] = await Promise.all([get(patientRef), get(personnelRef)]);
+      const [patientSnap, dentistSnap, clinicStaffSnap] = await Promise.all([get(patientRef), get(dentistRef), get(clinicStaffRef)]);
       let userType = "";
 
       if (patientSnap.exists()) {
@@ -41,16 +42,29 @@ const SignIn = () => {
           userType = "Patient";
         }
       }
-      if (!userType && personnelSnap.exists()) {
-        const personnels = Object.values(personnelSnap.val());
-        if (personnels.find(record => record.uid === user.uid)) {
-          userType = "Personnel";
+      if (!userType && dentistSnap.exists()) {
+        const dentists = Object.values(dentistSnap.val());
+        if (dentists.find(record => record.uid === user.uid)) {
+          userType = "Dentist";
+        }
+      }
+      if (!userType && clinicStaffSnap.exists()) {
+        const clinicStaffs = Object.values(clinicStaffSnap.val());
+        if (clinicStaffs.find(record => record.uid === user.uid)) {
+          userType = "Clinic Staff";
         }
       }
 
       if (userType) {
         alert(`Sign in successful as ${userType}!`);
-        navigate(userType === "Patient" ? "/DashboardPatient" : "/DashboardPersonnel");
+        
+        let dashboardRoute = 
+          userType === "Patient" ? "/DashboardPatient" :
+          userType === "Dentist" ? "/DashboardDentist" :
+          userType === "Clinic Staff" ? "/DashboardClinicStaff" :
+          "/"; // Default route in case of unexpected error
+
+        navigate(dashboardRoute); // Navigate after defining the route
       } else {
         alert("User type not determined. Please contact support.");
       }

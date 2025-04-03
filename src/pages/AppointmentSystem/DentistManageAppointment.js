@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../../backend/firebaseConfig";
+import { useNavigate } from "react-router-dom";
+import { db, auth } from "../../backend/firebaseConfig";
 import Calendar from "react-calendar";
 import { ref, onValue, remove, update } from "firebase/database";
 import Modal from "react-modal";
@@ -8,7 +9,7 @@ import ServicesList from "../../components/ServicesList"; // Import the Services
 
 Modal.setAppElement("#root");
 
-const ManageAppointments = () => {
+const DentistManageAppointment = () => {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [insuranceDetails, setInsuranceDetails] = useState(null);
@@ -16,6 +17,10 @@ const ManageAppointments = () => {
   const [editingAppointmentId, setEditingAppointmentId] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editFormData, setEditFormData] = useState({ services: [] });
+  const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  
 
   // Fetch appointments for the selected date
   useEffect(() => {
@@ -141,7 +146,7 @@ const ManageAppointments = () => {
   return (
     <div>
       <button>
-        <a href="/DashboardPersonnel">Go Back to Dashboard</a>
+        <a href="/DashboardDentist">Go Back to Dashboard</a>
       </button>
     <div style={{ display: "flex", justifyContent: "center", gap: "30px", padding: "20px" }}>
       <div style={{ width: "350px" }}>
@@ -279,4 +284,4 @@ const ManageAppointments = () => {
   );
 };
 
-export default ManageAppointments;
+export default DentistManageAppointment;

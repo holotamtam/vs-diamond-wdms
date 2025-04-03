@@ -8,7 +8,7 @@ import TreatmentHistory from "../../components/TreatmentHistory";
 
 Modal.setAppElement("#root");
 
-const PersonnelPatientRecord = () => {
+const ClinicStaffPatientRecord = () => {
   const [appointments, setAppointments] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientRecords, setPatientRecords] = useState([]);
@@ -138,7 +138,7 @@ const PersonnelPatientRecord = () => {
   return (
     <div>
       <button>
-        <a href="/DashboardPersonnel">Go Back to Dashboard</a>
+        <a href="/DashboardClinicStaff">Go Back to Dashboard</a>
       </button>
       <h2>Patient Records</h2>
       <input
@@ -245,4 +245,4 @@ const PersonnelPatientRecord = () => {
   );
 };
 
-export default PersonnelPatientRecord;
+export default ClinicStaffPatientRecord;

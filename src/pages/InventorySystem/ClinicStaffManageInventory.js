@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getDatabase, ref, set, onValue, remove } from "firebase/database";
 
-const Inventory = () => {
+const ClinicStaffManageInventory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingKey, setEditingKey] = useState(null);
   const [itemName, setItemName] = useState("");
@@ -67,7 +67,7 @@ const Inventory = () => {
   return (
     <div style={{ padding: "20px" }}>
       <button>
-        <a href="/DashboardPersonnel">Go Back to Dashboard</a>
+        <a href="/DashboardClinicStaff">Go Back to Dashboard</a>
       </button>
 
       <h2>Inventory</h2>
@@ -145,4 +145,4 @@ const Inventory = () => {
   );
 };
 
-export default Inventory;
+export default ClinicStaffManageInventory;
