@@ -29,6 +29,7 @@ import SignUpDentist from './pages/SignUp/SignUpDentist';
 import DashboardPatient from './pages/dashboard/DashboardPatient';
 import DashboardDentist from './pages/dashboard/DashboardDentist';
 import PatientAppointmentBooking from './pages/AppointmentSystem/PatientAppointmentBooking';
+import PatientAppointmentStatus from "./pages/AppointmentSystem/PatientAppointmentStatus";
 import DentistManageAppointment from './pages/AppointmentSystem/DentistManageAppointment';
 import PatientRecord from './pages/PatientRecordSystem/PatientRecord';
 import DentistPatientRecord from './pages/PatientRecordSystem/DentistPatientRecord';
@@ -56,6 +57,7 @@ function App() {
           <Route path='DashboardDentist' element={<DashboardDentist />}/>
           <Route path='DentistManageAppointment' element={<DentistManageAppointment/>}/>
           <Route path='PatientAppointmentBooking' element={<PatientAppointmentBooking />}/>
+          <Route path='PatientAppointmentStatus' element={<PatientAppointmentStatus />}/>
           <Route path='PatientRecord' element={<PatientRecord />}/>
           <Route path='DentistPatientRecord' element={<DentistPatientRecord />}/>
           <Route path='Services' element={<Services />}/>

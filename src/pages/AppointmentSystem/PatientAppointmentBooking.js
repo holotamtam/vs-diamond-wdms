@@ -3,44 +3,43 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, push, onValue, remove, update } from "firebase/database";
-import PatientInsuranceForm from "../AppointmentSystem/PatientInsuranceForm";
+import { ref, push, onValue } from "firebase/database";
 import Modal from "react-modal";
-import ServicesList, { servicesList } from "../../components/ServicesList"; // Import the ServicesList component and servicesList array
+import ServicesList, { servicesList } from "../../components/ServicesList";
 
 Modal.setAppElement("#root");
 
 const PatientAppointmentBooking = () => {
-
-  // State variables 
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedServices, setSelectedServices] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [bookingStatus, setBookingStatus] = useState("");
-  const [insuranceAsked, setInsuranceAsked] = useState(false);
-  const [hasInsurance, setHasInsurance] = useState(null);
-  const [showInsuranceModal, setShowInsuranceModal] = useState(false);
-  const [showInsuranceForm, setShowInsuranceForm] = useState(false);
-  const [insuranceDetails, setInsuranceDetails] = useState(null);
-  const [editingAppointmentId, setEditingAppointmentId] = useState(null);
- 
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  const [dentists, setDentists] = useState([]); // List of dentists
+  const [selectedDentist, setSelectedDentist] = useState(""); // Selected dentist
+
   // Clinic office hours (in minutes)
   const officeStartTime = 9 * 60; // 9:00 AM
-  const officeEndTime = 17 * 60;  // 5:00 PM
+  const officeEndTime = 17 * 60; // 5:00 PM
 
-  // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user ? user : null);
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
- 
-  // Helper: fetch appointments for the selected date
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    fetchAppointmentsForDate();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    fetchDentists(); // Fetch the list of dentists
+  }, []);
+
   const fetchAppointmentsForDate = () => {
     const formattedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
@@ -48,30 +47,30 @@ const PatientAppointmentBooking = () => {
       .toISOString()
       .split("T")[0];
     const appointmentsRef = ref(db, `appointments/${formattedDate}`);
-    onValue(
-      appointmentsRef,
-      (snapshot) => {
-        const data = snapshot.val();
-        const fetched = data
-          ? Object.entries(data).map(([id, value]) => ({ id, ...value }))
-          : [];
-        setAppointments(fetched);
-        console.log("Fetched appointments for", formattedDate, fetched);
-      },
-      { onlyOnce: true }
-    );
+    onValue(appointmentsRef, (snapshot) => {
+      const data = snapshot.val();
+      const fetched = data
+        ? Object.entries(data).map(([id, value]) => ({ id, ...value }))
+        : [];
+      setAppointments(fetched);
+    });
   };
- 
-  // Fetch appointments when selectedDate changes
-  useEffect(() => {
-    if (!selectedDate) return;
-    fetchAppointmentsForDate();
-  }, [selectedDate]);
- 
-  // Handle date change
-  const handleDateChange = (date) => setSelectedDate(date);
- 
-  // Toggle service selection
+
+  const fetchDentists = () => {
+    const dentistsRef = ref(db, "users/Personnel/Dentist");
+    onValue(dentistsRef, (snapshot) => {
+      const data = snapshot.val();
+      console.log("Fetched Dentists:", data); // Debugging
+      if (data) {
+        const dentistList = Object.entries(data).map(([id, value]) => ({
+          id,
+          name: `Dr. ${value.firstName} ${value.lastName}`,
+        }));
+        setDentists(dentistList);
+      }
+    });
+  };
+
   const toggleService = (service) => {
     setSelectedServices((prevSelected) =>
       prevSelected.includes(service)
@@ -79,16 +78,11 @@ const PatientAppointmentBooking = () => {
         : [...prevSelected, service]
     );
   };
- 
-  // Calculate total duration based on selected services
+
   const calculateTotalDuration = () => {
-    return selectedServices.reduce((total, service) => {
-      const serviceObj = servicesList.find((s) => s.name === service);
-      return total + (serviceObj ? serviceObj.time : 0);
-    }, 0);
+    return 60; // Fixed duration of 1 hour for all services
   };
- 
-  // Format time in minutes to HH:MM AM/PM format
+
   const formatTime = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -98,31 +92,10 @@ const PatientAppointmentBooking = () => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
-  // Generate available time slots based on current appointments
   const generateTimeSlots = () => {
-    const totalDuration = calculateTotalDuration();
+    const totalDuration = calculateTotalDuration(); // Always 60 minutes
     const slots = [];
-    let lastEndTime = officeStartTime;
-
-    // Sort appointments by start time (converted to minutes)
-    const sortedAppointments = [...appointments].sort((a, b) => {
-      const aStart = parseInt(a.time.split(":")[0]) * 60 + parseInt(a.time.split(":")[1]);
-      const bStart = parseInt(b.time.split(":")[0]) * 60 + parseInt(b.time.split(":")[1]);
-      return aStart - bStart;
-    });
- 
-    // Update lastEndTime based on existing appointments
-    sortedAppointments.forEach((appointment) => {
-      const appointmentStart = parseInt(appointment.time.split(":")[0]) * 60 + parseInt(appointment.time.split(":")[1]);
-      const appointmentEnd = appointmentStart + appointment.duration;
-      if (appointmentEnd > lastEndTime) {
-        lastEndTime = appointmentEnd;
-      }
-    });
-
- 
-    // Create slots from lastEndTime until officeEndTime
-    for (let start = lastEndTime; start + totalDuration <= officeEndTime; start += 30) {
+    for (let start = officeStartTime; start + totalDuration <= officeEndTime; start += 30) {
       const end = start + totalDuration;
       const slot = {
         start,
@@ -134,7 +107,7 @@ const PatientAppointmentBooking = () => {
       const overlaps = appointments.some((appointment) => {
         const appointmentStart = parseInt(appointment.time.split(":")[0]) * 60 + parseInt(appointment.time.split(":")[1]);
         const appointmentEnd = appointmentStart + appointment.duration;
-        return (start < appointmentEnd && end > appointmentStart);
+        return start < appointmentEnd && end > appointmentStart;
       });
 
       if (!overlaps) {
@@ -143,43 +116,13 @@ const PatientAppointmentBooking = () => {
     }
     return slots;
   };
- 
-  // Handle appointment submission
-  const handleAppointmentSubmit = async (insuranceData = null) => {
-    if (loading) {
-      alert("Please wait while we verify your login status.");
-      return;
-    }
-    if (!selectedDate || selectedServices.length === 0) {
-      setBookingStatus("Please select a date and at least one service.");
-      return;
-    }
-    if (!currentUser || !currentUser.email) {
-      alert("You need to be logged in to book an appointment.");
+
+  const handleAppointmentSubmit = async () => {
+    if (!selectedDate || selectedServices.length === 0 || !selectedTimeSlot || !selectedDentist) {
+      setBookingStatus("Please select a date, services, time slot, and dentist.");
       return;
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if(selectedDate < today) {
-      setBookingStatus("You cannot book an appointment for a past date.");
-      return;
-    }
-
-    // Note: We now always want to ask for insurance on each new booking.
-    // So we assume that when the Book Appointment button is clicked,
-    // insuranceAsked is reset (see below).
-
-    const totalDuration = calculateTotalDuration();
-    const availableSlots = generateTimeSlots();
-    if (availableSlots.length === 0) {
-      setBookingStatus("No available time slots for the selected date.");
-      return;
-    }
-
-    // Use the first available slot
-    const selectedTime = availableSlots[0].start;
     const formattedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
     )
@@ -190,152 +133,24 @@ const PatientAppointmentBooking = () => {
       userId: currentUser.email,
       date: formattedDate,
       services: selectedServices,
-      time: `${Math.floor(selectedTime / 60)}:${selectedTime % 60 === 0 ? "00" : selectedTime % 60}`,
-      endTime: `${Math.floor((selectedTime + totalDuration) / 60)}:${(selectedTime + totalDuration) % 60 === 0 ? "00" : (selectedTime + totalDuration) % 60}`,
-      duration: totalDuration,
+      time: `${Math.floor(selectedTimeSlot.start / 60)}:${selectedTimeSlot.start % 60 === 0 ? "00" : selectedTimeSlot.start % 60}`,
+      duration: calculateTotalDuration(),
+      dentist: selectedDentist,
       status: "Pending",
-      insurance: hasInsurance ? "Yes" : "No",
     };
-    if (insuranceData) {
-      try {
-        appointmentData.insuranceDetails = JSON.parse(JSON.stringify(insuranceData));
-      } catch (err) {
-        console.error("Failed to sanitize insurance data:", err);
-      }
-    }
-    console.log("Booking appointment with data:", appointmentData);
+
     const appointmentRef = ref(db, `appointments/${formattedDate}`);
     try {
       await push(appointmentRef, appointmentData);
       setBookingStatus("Appointment booked successfully!");
-      console.log("Appointment booked successfully!");
       setSelectedServices([]);
- 
-      setInsuranceAsked(false);
-      setShowInsuranceForm(false);
-
+      setSelectedTimeSlot(null);
+      setSelectedDentist("");
       fetchAppointmentsForDate();
-      setTimeout(() => setBookingStatus(""), 3000);
     } catch (error) {
       console.error("Error booking appointment:", error);
       setBookingStatus("Error booking appointment.");
     }
-  };
-
-  // Handle appointment cancellation and adjust subsequent times
-  const handleCancelAppointment = async (id) => {
-    if (!window.confirm("Do you want to cancel your appointment?")) return;
-
-    const formattedDate = new Date(
-      selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
-    )
-      .toISOString()
-      .split("T")[0];
-    const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-
-    try {
-      await remove(appointmentRef);
-      console.log("Appointment removed:", id);
-
-      // After removal, update times for remaining appointments
-      const updatedRef = ref(db, `appointments/${formattedDate}`);
-      onValue(
-        updatedRef,
-        async (snapshot) => {
-          const data = snapshot.val();
-          let updatedAppointments = data
-            ? Object.entries(data).map(([id, value]) => ({ id, ...value }))
-            : [];
-
-          // Sort appointments by current start time
-          updatedAppointments.sort((a, b) => {
-            const aStart = parseInt(a.time.split(":")[0]) * 60 + parseInt(a.time.split(":")[1]);
-            const bStart = parseInt(b.time.split(":")[0]) * 60 + parseInt(b.time.split(":")[1]);
-            return aStart - bStart;
-          });
-
-          let lastEndTime = officeStartTime;
-          // Update each appointment's start and end times sequentially
-          for (const appointment of updatedAppointments) {
-            const newStartTime = lastEndTime;
-            const newEndTime = newStartTime + appointment.duration;
-            const newTimeStr = `${Math.floor(newStartTime / 60)}:${newStartTime % 60 === 0 ? "00" : newStartTime % 60}`;
-            const newEndTimeStr = `${Math.floor(newEndTime / 60)}:${newEndTime % 60 === 0 ? "00" : newEndTime % 60}`;
-            await update(ref(db, `appointments/${formattedDate}/${appointment.id}`), {
-              time: newTimeStr,
-              endTime: newEndTimeStr,
-            });
-            // Update the local appointment object
-            appointment.time = newTimeStr;
-            appointment.endTime = newEndTimeStr;
-            lastEndTime = newEndTime;
-          }
-          // Re-fetch appointments to ensure local state is current
-          fetchAppointmentsForDate();
-          console.log("Updated appointments after cancellation:", updatedAppointments);
-        },
-        { onlyOnce: true }
-      );
-
-      setBookingStatus("Appointment canceled and times adjusted.");
-      console.log("Cancellation complete and times adjusted.");
-    } catch (error) {
-      console.error("Error canceling appointment:", error);
-      setBookingStatus("Error canceling appointment.");
-    }
-  };
- 
-  // Insurance handling functions
-  const handleInsuranceConfirm = (hasInsurance) => {
-    setHasInsurance(hasInsurance);
-    setInsuranceAsked(true);
-    setShowInsuranceModal(false);
-    if (hasInsurance) {
-      setShowInsuranceForm(true);
-    } else {
-      handleAppointmentSubmit();
-    }
-  };
- 
-  const handleInsuranceFormSubmit = async (formData) => {
-    setHasInsurance(!!formData);
-    setInsuranceAsked(true);
-    setShowInsuranceForm(false);
-
-    if (editingAppointmentId) {
-      const formattedDate = new Date(
-        selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
-      )
-        .toISOString()
-        .split("T")[0];
-      const appointmentRef = ref(db, `appointments/${formattedDate}/${editingAppointmentId}`);
-
-      await update(appointmentRef, { insuranceDetails: formData });
-      setAppointments((prevAppointments) =>
-        prevAppointments.map((appointment) =>
-          appointment.id === editingAppointmentId
-            ? { ...appointment, insuranceDetails: formData }
-            : appointment
-        )
-      );
-      setInsuranceDetails(formData);
-      setEditingAppointmentId(null);
-    } else {
-      handleAppointmentSubmit(formData);
-    }
-  };
- 
-  const handleInsuranceClose = () => {
-    setHasInsurance(false);
-    setInsuranceAsked(true);
-    setShowInsuranceForm(false);
-    handleAppointmentSubmit(null);
-  };
- 
-  const handleViewInsuranceDetails = (appointment) => {
-    setInsuranceDetails(appointment.insuranceDetails);
-    setEditingAppointmentId(appointment.id);
-    setShowInsuranceForm(true);
   };
 
   return (
@@ -344,10 +159,11 @@ const PatientAppointmentBooking = () => {
         <a href="/DashboardPatient">Go Back to Dashboard</a>
       </button>
       <div style={{ display: "flex", justifyContent: "center", gap: "30px", padding: "20px" }}>
+        {/* Left Section: Appointment Form */}
         <div style={{ width: "350px" }}>
           <h1>Make an Appointment</h1>
           <h2>Select Date:</h2>
-          <Calendar onChange={handleDateChange} value={selectedDate} />
+          <Calendar onChange={setSelectedDate} value={selectedDate} />
 
           <h2>Select Services:</h2>
           <div>
@@ -358,12 +174,67 @@ const PatientAppointmentBooking = () => {
               <ServicesList selectedServices={selectedServices} toggleService={toggleService} />
             )}
           </div>
-          {/* Reset insuranceAsked and show modal on each new booking attempt */}
+
+          <h2>Select Dentist:</h2>
+          <select
+           value={selectedDentist}
+           onChange={(e) => setSelectedDentist(e.target.value)}
+           style={{ width: "100%", padding: "10px", marginTop: "10px" }}
+          >
+           <option value="">Select a Dentist</option>
+           {dentists.map((dentist) => (
+           <option key={dentist.id} value={dentist.name}>
+           {dentist.name}
+          </option>
+           ))}
+          </select>
+
+          {/* Appointment Summary */}
+          <div style={{ border: "1px solid #ddd", padding: "10px", borderRadius: "5px", marginTop: "20px" }}>
+            <h2>Appointment Summary</h2>
+            <p><strong>Date:</strong> {selectedDate ? selectedDate.toDateString() : "Not selected"}</p>
+            <p><strong>Services:</strong> {selectedServices.length > 0 ? selectedServices.join(", ") : "Not selected"}</p>
+            <p><strong>Time Slot:</strong> {selectedTimeSlot ? selectedTimeSlot.display : "Not selected"}</p>
+            <p><strong>Dentist:</strong> {selectedDentist || "Not selected"}</p>
+          </div>
+        </div>
+
+        {/* Right Section: Time Slot Table */}
+        <div style={{ flex: 1 }}>
+          <h2>Available Time Slots:</h2>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
+            <thead>
+              <tr>
+                <th style={{ border: "1px solid black", padding: "10px" }}>Time Slot</th>
+                <th style={{ border: "1px solid black", padding: "10px" }}>Select</th>
+              </tr>
+            </thead>
+            <tbody>
+              {generateTimeSlots().map((slot, index) => (
+                <tr key={index}>
+                  <td style={{ border: "1px solid black", padding: "10px" }}>{slot.display}</td>
+                  <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
+                    <button
+                      onClick={() => setSelectedTimeSlot(slot)}
+                      style={{
+                        background: selectedTimeSlot === slot ? "#4CAF50" : "#007BFF", // Green for selected, blue for unselected
+                        color: "white",
+                        border: "none",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                        borderRadius: "5px",
+                      }}
+                    >
+                      {selectedTimeSlot === slot ? "Selected" : "Select"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
           <button
-            onClick={() => {
-              setInsuranceAsked(false);
-              setShowInsuranceModal(true);
-            }}
+            onClick={handleAppointmentSubmit}
             style={{ marginTop: "10px", width: "100%" }}
           >
             Book Appointment
@@ -375,139 +246,6 @@ const PatientAppointmentBooking = () => {
             </p>
           )}
         </div>
-
-        <div style={{ width: "400px" }}>
-          <h2>Appointments for {selectedDate.toDateString()}</h2>
-          <ul style={{ padding: "0", listStyle: "none" }}>
-            {appointments.length > 0 &&
-              appointments.map((appointment) => (
-                <li
-                  key={appointment.id}
-                  style={{
-                    padding: "10px",
-                    border: "1px solid #000",
-                    marginBottom: "5px",
-                    position: "relative",
-                    backgroundColor: appointment.userId === currentUser?.email ? "#e0e0e0" : "transparent",
-                  }}
-                >
-                  {appointment.userId === currentUser?.email && (
-                    <>
-                      <button
-                        onClick={() => handleCancelAppointment(appointment.id)}
-                        style={{
-                          position: "absolute",
-                          top: "5px",
-                          right: "5px",
-                          background: "red",
-                          color: "white",
-                          border: "none",
-                          padding: "5px 10px",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      {appointment.insuranceDetails && (
-                        <button
-                          onClick={() => handleViewInsuranceDetails(appointment)}
-                          style={{
-                            position: "absolute",
-                            top: "5px",
-                            right: "70px",
-                            background: "blue",
-                            color: "white",
-                            border: "none",
-                            padding: "5px 10px",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                          }}
-                        >
-                          View Insurance Details
-                        </button>
-                      )}
-                    </>
-                  )}
-                  <div>
-                    <b>{appointment.date}</b>
-                    <br /> {appointment.services.join(", ")}
-                    <br />
-                    <b>
-                      Time:{" "}
-                      {formatTime(
-                        parseInt(appointment.time.split(":")[0]) * 60 +
-                          parseInt(appointment.time.split(":")[1])
-                      )}{" "}
-                      -{" "}
-                      {formatTime(
-                        parseInt(appointment.time.split(":")[0]) * 60 +
-                          parseInt(appointment.time.split(":")[1]) +
-                          appointment.duration
-                      )}
-                    </b>
-                    <br />
-                    <b>
-                      Status:{" "}
-                      <span style={{ color: appointment.status === "Confirmed" ? "green" : "orange" }}>
-                        {appointment.status}
-                      </span>
-                    </b>
-                    <br />
-                    <b>Patient: {appointment.userId}</b>
-                  </div>
-                </li>
-              ))}
-          </ul>
-        </div>
-
-        <Modal
-          isOpen={showInsuranceModal}
-          onRequestClose={() => setShowInsuranceModal(false)}
-          contentLabel="Insurance Modal"
-          style={{
-            overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
-            content: {
-              top: "50%",
-              left: "50%",
-              right: "auto",
-              bottom: "auto",
-              marginRight: "-50%",
-              transform: "translate(-50%, -50%)",
-            },
-          }}
-        >
-          <h2>Do you have insurance?</h2>
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
-            <button onClick={() => handleInsuranceConfirm(true)} style={{ marginRight: "10px" }}>
-              Yes
-            </button>
-            <button onClick={() => handleInsuranceConfirm(false)}>No</button>
-          </div>
-        </Modal>
-
-        <Modal
-          isOpen={showInsuranceForm}
-          onRequestClose={handleInsuranceClose}
-          contentLabel="Insurance Form Modal"
-          style={{
-            overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
-            content: {
-              top: "50%",
-              left: "50%",
-              right: "auto",
-              bottom: "auto",
-              marginRight: "-50%",
-              transform: "translate(-50%, -50%)",
-            },
-          }}
-        >
-          <PatientInsuranceForm
-            onSubmit={handleInsuranceFormSubmit}
-            onClose={handleInsuranceClose}
-            initialData={insuranceDetails || {}}
-          />
-        </Modal>
       </div>
     </div>
   );

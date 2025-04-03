@@ -148,60 +148,97 @@ const ClinicStaffManageAppointment = () => {
       <button>
         <a href="/DashboardClinicStaff">Go Back to Dashboard</a>
       </button>
-    <div style={{ display: "flex", justifyContent: "center", gap: "30px", padding: "20px" }}>
-      <div style={{ width: "350px" }}>
+      <div style={{ padding: "20px" }}>
         <h1>Manage Appointments</h1>
         <h2>Select Date:</h2>
         <Calendar onChange={handleDateChange} value={selectedDate} />
-
-        <div style={{ width: "400px" }}>
-          <h2>Appointments for {selectedDate.toDateString()}</h2>
-          <ul style={{ padding: "0", listStyle: "none" }}>
-            {appointments.length > 0 && appointments.map((appointment) => (
-              <li key={appointment.id} style={{ padding: "10px", border: "1px solid #000", marginBottom: "5px", position: "relative", backgroundColor: "#e0e0e0" }}>
-                <button onClick={() => handleCancelAppointment(appointment.id)} style={{ position: "absolute", top: "5px", right: "5px", background: "red", color: "white", border: "none", padding: "5px 10px", cursor: "pointer", fontSize: "12px" }}>Cancel</button>
-                {appointment.insuranceDetails && (
-                  <button onClick={() => handleViewInsuranceDetails(appointment)} style={{ position: "absolute", top: "5px", right: "120px", background: "blue", color: "white", border: "none", padding: "5px 10px", cursor: "pointer", fontSize: "12px" }}>Insurance Details</button>
-                )}
-                <button onClick={() => handleEditAppointment(appointment)} style={{ position: "absolute", top: "5px", right: "70px", background: "orange", color: "white", border: "none", padding: "5px 10px", cursor: "pointer", fontSize: "12px" }}>Edit</button>
-                <div>
-                  <b>{appointment.date}</b>
-                  <br /> {appointment.services.join(", ")}
-                  <br /> <b>Time: {formatTime(parseInt(appointment.time.split(":")[0]) * 60 + parseInt(appointment.time.split(":")[1]))} - {formatTime(parseInt(appointment.time.split(":")[0]) * 60 + parseInt(appointment.time.split(":")[1]) + appointment.duration)}</b>
-                  <br /> <b>Status: <span style={{ color: appointment.status === "Confirmed" ? "green" : appointment.status === "Completed" ? "blue" : "orange" }}>{appointment.status}</span></b>
-                  <br /> <b>Patient: {appointment.userId}</b>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+  
+        <h2>Appointments for {selectedDate.toDateString()}</h2>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
+          <thead>
+            <tr>
+              <th style={{ border: "1px solid black", padding: "10px" }}>Time</th>
+              <th style={{ border: "1px solid black", padding: "10px" }}>Patient</th>
+              <th style={{ border: "1px solid black", padding: "10px" }}>Services</th>
+              <th style={{ border: "1px solid black", padding: "10px" }}>Dentist</th>
+              <th style={{ border: "1px solid black", padding: "10px" }}>Status</th>
+              <th style={{ border: "1px solid black", padding: "10px" }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {appointments.length > 0 ? (
+              appointments.map((appointment) => (
+                <tr key={appointment.id}>
+                  <td style={{ border: "1px solid black", padding: "10px" }}>
+                    {formatTime(parseInt(appointment.time.split(":")[0]) * 60 + parseInt(appointment.time.split(":")[1]))} -{" "}
+                    {formatTime(
+                      parseInt(appointment.time.split(":")[0]) * 60 +
+                        parseInt(appointment.time.split(":")[1]) +
+                        appointment.duration
+                    )}
+                  </td>
+                  <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.userId}</td>
+                  <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.services.join(", ")}</td>
+                  <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.dentist || "Not assigned"}</td>
+                  <td style={{ border: "1px solid black", padding: "10px", color: appointment.status === "Confirmed" ? "green" : appointment.status === "Completed" ? "blue" : "orange" }}>
+                    {appointment.status}
+                  </td>
+                  <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
+                    <button
+                      onClick={() => handleEditAppointment(appointment)}
+                      style={{
+                        background: "orange",
+                        color: "white",
+                        border: "none",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                        marginRight: "5px",
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleCancelAppointment(appointment.id)}
+                      style={{
+                        background: "red",
+                        color: "white",
+                        border: "none",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    {appointment.insuranceDetails && (
+                      <button
+                        onClick={() => handleViewInsuranceDetails(appointment)}
+                        style={{
+                          background: "blue",
+                          color: "white",
+                          border: "none",
+                          padding: "5px 10px",
+                          cursor: "pointer",
+                          marginLeft: "5px",
+                        }}
+                      >
+                        Insurance Details
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" style={{ textAlign: "center", padding: "10px" }}>
+                  No appointments found for this date.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
-      </div>
-      <Modal
-        isOpen={showInsuranceForm}
-        onRequestClose={handleInsuranceClose}
-        contentLabel="Insurance Form Modal"
-        style={{
-          overlay: {
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-          },
-          content: {
-            top: '50%',
-            left: '50%',
-            right: 'auto',
-            bottom: 'auto',
-            marginRight: '-50%',
-            transform: 'translate(-50%, -50%)',
-          },
-        }}
-      >
-        <ViewInsurance
-        isOpen={showInsuranceForm}
-        onClose={handleInsuranceClose}
-        insuranceDetails={insuranceDetails}
-      />
-      </Modal>
-
+  
+      {/* Edit Appointment Modal */}
       <Modal
         isOpen={showEditForm}
         onRequestClose={handleEditClose}
@@ -211,20 +248,22 @@ const ClinicStaffManageAppointment = () => {
             backgroundColor: "rgba(0, 0, 0, 0.5)",
           },
           content: {
-            top: '50%',
-            left: '50%',
-            right: 'auto',
-            bottom: 'auto',
-            marginRight: '-50%',
-            transform: 'translate(-50%, -50%)',
-            height: '400px',
+            top: "50%",
+            left: "50%",
+            right: "auto",
+            bottom: "auto",
+            marginRight: "-50%",
+            transform: "translate(-50%, -50%)",
+            height: "400px",
           },
         }}
       >
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          handleEditFormSubmit(editFormData);
-        }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleEditFormSubmit(editFormData);
+          }}
+        >
           <h2>Edit Appointment</h2>
           <label>
             Date:
@@ -252,7 +291,7 @@ const ClinicStaffManageAppointment = () => {
               <option value="Confirmed">Confirmed</option>
               <option value="Completed">Completed</option>
             </select>
-          </label>  
+          </label>
           <label>
             Bill:
             <input
@@ -269,16 +308,44 @@ const ClinicStaffManageAppointment = () => {
             />
           </label>
           <label>
-            Dentist Remarks:
+            Remarks:
             <input
               type="text"
-              value={editFormData.dentistRemarks}
-              onChange={(e) => setEditFormData({ ...editFormData, dentistRemarks:  e.target.value})}
+              value={editFormData.dentistRemarks || ""}
+              onChange={(e) => setEditFormData({ ...editFormData, dentistRemarks: e.target.value })}
             />
           </label>
           <button type="submit">Save</button>
-          <button type="button" onClick={handleEditClose}>Cancel</button>
+          <button type="button" onClick={handleEditClose}>
+            Cancel
+          </button>
         </form>
+      </Modal>
+  
+      {/* Insurance Details Modal */}
+      <Modal
+        isOpen={showInsuranceForm}
+        onRequestClose={handleInsuranceClose}
+        contentLabel="Insurance Details Modal"
+        style={{
+          overlay: {
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          },
+          content: {
+            top: "50%",
+            left: "50%",
+            right: "auto",
+            bottom: "auto",
+            marginRight: "-50%",
+            transform: "translate(-50%, -50%)",
+          },
+        }}
+      >
+        <ViewInsurance
+          isOpen={showInsuranceForm}
+          onClose={handleInsuranceClose}
+          insuranceDetails={insuranceDetails}
+        />
       </Modal>
     </div>
   );

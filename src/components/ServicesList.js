@@ -2,12 +2,12 @@ import React from "react";
 
 export const servicesList = [
   { name: "Dental Cleaning", value: "Dental Cleaning", label: "Dental Cleaning", time: 60 },
-  { name: "Dental Bonding", value: "Dental Bonding", label: "Dental Bonding", time: 45 },
-  { name: "Dental Crowns", value: "Dental Crowns", label: "Dental Crowns", time: 75 },
-  { name: "Teeth Whitening", value: "Teeth Whitening", label: "Teeth Whitening", time: 45 },
-  { name: "Tooth Extraction", value: "Tooth Extraction", label: "Tooth Extraction", time: 30 },
-  { name: "Cosmetic Fillings", value: "Cosmetic Fillings", label: "Cosmetic Fillings", time: 45 },
-  { name: "Dental Veneers", value: "Dental Veneers", label: "Dental Veneers", time: 90 },
+  { name: "Dental Bonding", value: "Dental Bonding", label: "Dental Bonding", time: 60 },
+  { name: "Dental Crowns", value: "Dental Crowns", label: "Dental Crowns", time: 60 },
+  { name: "Teeth Whitening", value: "Teeth Whitening", label: "Teeth Whitening", time: 60 },
+  { name: "Tooth Extraction", value: "Tooth Extraction", label: "Tooth Extraction", time: 60 },
+  { name: "Cosmetic Fillings", value: "Cosmetic Fillings", label: "Cosmetic Fillings", time: 60 },
+  { name: "Dental Veneers", value: "Dental Veneers", label: "Dental Veneers", time: 60 },
   { name: "Dentures", value: "Dentures", label: "Dentures", time: 60 },
 ];
 
