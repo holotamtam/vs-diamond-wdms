@@ -17,15 +17,14 @@ const ClinicStaffManageAppointment = () => {
   const [editingAppointmentId, setEditingAppointmentId] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editFormData, setEditFormData] = useState({ services: [] });
-  const [userRole, setUserRole] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  
 
   // Fetch appointments for the selected date
   useEffect(() => {
     if (!selectedDate) return;
-    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
     const appointmentsRef = ref(db, `appointments/${formattedDate}`);
 
     onValue(appointmentsRef, (snapshot) => {
@@ -41,7 +40,9 @@ const ClinicStaffManageAppointment = () => {
   const handleCancelAppointment = async (id) => {
     if (!window.confirm("Do you want to cancel this appointment?")) return;
 
-    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
 
     try {
@@ -65,7 +66,9 @@ const ClinicStaffManageAppointment = () => {
 
   // Handle confirming the appointment
   const handleConfirmAppointment = async (id) => {
-    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
 
     try {
@@ -82,7 +85,9 @@ const ClinicStaffManageAppointment = () => {
 
   // Handle completing the appointment
   const handleCompleteAppointment = async (id) => {
-    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
 
     try {
@@ -107,7 +112,9 @@ const ClinicStaffManageAppointment = () => {
   // Handle edit form submission
   const handleEditFormSubmit = async (formData) => {
     if (editingAppointmentId) {
-      const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+      const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
+        .toISOString()
+        .split("T")[0];
       const appointmentRef = ref(db, `appointments/${formattedDate}/${editingAppointmentId}`);
       await update(appointmentRef, formData);
       setEditingAppointmentId(null);
@@ -152,7 +159,7 @@ const ClinicStaffManageAppointment = () => {
         <h1>Manage Appointments</h1>
         <h2>Select Date:</h2>
         <Calendar onChange={handleDateChange} value={selectedDate} />
-  
+
         <h2>Appointments for {selectedDate.toDateString()}</h2>
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
           <thead>
@@ -170,7 +177,11 @@ const ClinicStaffManageAppointment = () => {
               appointments.map((appointment) => (
                 <tr key={appointment.id}>
                   <td style={{ border: "1px solid black", padding: "10px" }}>
-                    {formatTime(parseInt(appointment.time.split(":")[0]) * 60 + parseInt(appointment.time.split(":")[1]))} -{" "}
+                    {formatTime(
+                      parseInt(appointment.time.split(":")[0]) * 60 +
+                        parseInt(appointment.time.split(":")[1])
+                    )}{" "}
+                    -{" "}
                     {formatTime(
                       parseInt(appointment.time.split(":")[0]) * 60 +
                         parseInt(appointment.time.split(":")[1]) +
@@ -180,7 +191,18 @@ const ClinicStaffManageAppointment = () => {
                   <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.userId}</td>
                   <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.services.join(", ")}</td>
                   <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.dentist || "Not assigned"}</td>
-                  <td style={{ border: "1px solid black", padding: "10px", color: appointment.status === "Confirmed" ? "green" : appointment.status === "Completed" ? "blue" : "orange" }}>
+                  <td
+                    style={{
+                      border: "1px solid black",
+                      padding: "10px",
+                      color:
+                        appointment.status === "Confirmed"
+                          ? "green"
+                          : appointment.status === "Completed"
+                          ? "blue"
+                          : "orange",
+                    }}
+                  >
                     {appointment.status}
                   </td>
                   <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
@@ -237,7 +259,7 @@ const ClinicStaffManageAppointment = () => {
           </tbody>
         </table>
       </div>
-  
+
       {/* Edit Appointment Modal */}
       <Modal
         isOpen={showEditForm}
@@ -321,7 +343,7 @@ const ClinicStaffManageAppointment = () => {
           </button>
         </form>
       </Modal>
-  
+
       {/* Insurance Details Modal */}
       <Modal
         isOpen={showInsuranceForm}
