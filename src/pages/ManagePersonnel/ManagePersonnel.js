@@ -8,6 +8,7 @@ const ManagePersonnel = () => {
     const [clinicStaff, setClinicStaff] = useState([]);
     const [dentists, setDentists] = useState([]);
 
+    // to fetch the clinic staff and dentists from the database.
     useEffect(() => {
         const fetchPersonnel = async () => {
             const db = getDatabase(app);
@@ -31,6 +32,7 @@ const ManagePersonnel = () => {
         fetchPersonnel();
     }, []);
 
+    // function that handles the deletion of dentist or clinic staff accounts.
     const handleDelete = async (userType, id) => {
         const db = getDatabase(app);
         const userRef = ref(db, `users/Personnel/${userType}/${id}`);
@@ -39,7 +41,6 @@ const ManagePersonnel = () => {
             await remove(userRef);
             alert(`${userType} deleted successfully!`);
             
-            // Refresh state after deletion
             if (userType === "ClinicStaff") {
                 setClinicStaff(clinicStaff.filter(person => person.id !== id));
             } else if (userType === "Dentist") {
@@ -57,6 +58,7 @@ const ManagePersonnel = () => {
 
             <h2>Manage Personnel</h2>
 
+            {/* Links for adding another dentist or clinic staff */} 
             <div>
                 <Link to="/SignUpClinicStaff"><button>Add Clinic Staff</button></Link>
                 <Link to="/SignUpDentist"><button>Add Dentist</button></Link>
@@ -72,7 +74,7 @@ const ManagePersonnel = () => {
                         </li>
                     ))
                 ) : (
-                    <p>No clinic staff found.</p>
+                    <p>No Clinic Staff found.</p>
                 )}
             </ul>
 
@@ -86,7 +88,7 @@ const ManagePersonnel = () => {
                         </li>
                     ))
                 ) : (
-                    <p>No dentists found.</p>
+                    <p>No Dentists found.</p>
                 )}
             </ul>
         </div>

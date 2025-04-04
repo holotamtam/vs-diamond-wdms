@@ -119,7 +119,7 @@ const SignUpDentist = () => {
         gender,
       });
 
-      alert("Registration successful for Personnel");
+      alert("Registration successful for Dentist");
       navigate("/DashboardDentist");
     } catch (error) {
       // If the error is due to the email already in use, alert and exit.
