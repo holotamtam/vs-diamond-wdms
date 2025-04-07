@@ -5,11 +5,16 @@ import app from "../../backend/firebaseConfig";
 import { getDatabase, ref, get } from "firebase/database";
 
 const SignIn = () => {
+  // state variables
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const auth = getAuth(app);
 
+  const auth = getAuth(app);
+  // userType variable to store the type of user (Patient, Dentist, Clinic Staff)
+  let userType = "";
+
+  // function to handle sign in
   const handleSignIn = async () => {
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !password) {
@@ -17,24 +22,20 @@ const SignIn = () => {
       return;
     }
 
-    // Log input values for debugging.
-    console.log("Attempting sign in with email:", trimmedEmail);
-    console.log("Password length:", password.length);
-
     try {
-      // Sign in with Firebase Auth using email and password.
+      // to sign in the user with the provided email and password.
       const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
       console.log("Sign in successful, userCredential:", userCredential);
       const user = userCredential.user;
       
-      // Now determine the user type from the Realtime Database using the user's uid.
+      // to determine the user type from the Realtime Database using the user's uid.
       const db = getDatabase(app);
       const patientRef = ref(db, "users/Patient");
-      const dentistRef = ref(db, "users/Personnel/Dentist");
+      const dentistOwnerRef = ref(db, "users/Personnel/DentistOwner");
+      const associateDentistRef = ref(db, "users/Personnel/AssociateDentist");
       const clinicStaffRef = ref(db, "users/Personnel/ClinicStaff");
 
-      const [patientSnap, dentistSnap, clinicStaffSnap] = await Promise.all([get(patientRef), get(dentistRef), get(clinicStaffRef)]);
-      let userType = "";
+      const [patientSnap, dentistOwnerSnap, associateDentistSnap, clinicStaffSnap] = await Promise.all([get(patientRef), get(dentistOwnerRef), get(associateDentistRef), get(clinicStaffRef)]);
 
       if (patientSnap.exists()) {
         const patients = Object.values(patientSnap.val());
@@ -42,10 +43,16 @@ const SignIn = () => {
           userType = "Patient";
         }
       }
-      if (!userType && dentistSnap.exists()) {
-        const dentists = Object.values(dentistSnap.val());
-        if (dentists.find(record => record.uid === user.uid)) {
-          userType = "Dentist";
+      if (!userType && dentistOwnerSnap.exists()) {
+        const dentistsOwner = Object.values(dentistOwnerSnap.val());
+        if (dentistsOwner.find(record => record.uid === user.uid)) {
+          userType = "Dentist Owner";
+        }
+      }
+      if (!userType && associateDentistSnap.exists()) {
+        const associateDentist = Object.values(associateDentistSnap.val());
+        if (associateDentist.find(record => record.uid === user.uid)) {
+          userType = "Associate Dentist";
         }
       }
       if (!userType && clinicStaffSnap.exists()) {
@@ -60,7 +67,8 @@ const SignIn = () => {
         
         let dashboardRoute = 
           userType === "Patient" ? "/DashboardPatient" :
-          userType === "Dentist" ? "/DashboardDentist" :
+          userType === "Dentist Owner" ? "/DashboardDentistOwner" :
+          userType === "Associate Dentist" ? "/DashboardAssociateDentist" :
           userType === "Clinic Staff" ? "/DashboardClinicStaff" :
           "/"; // Default route in case of unexpected error
 
@@ -76,8 +84,6 @@ const SignIn = () => {
   };
 
   return (
-
-    
     <div>
       <button onClick={() => navigate(-1)}>Back</button>
       <h3>Sign In</h3>

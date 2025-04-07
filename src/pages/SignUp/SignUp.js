@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const SignUp = () => {
 
-  // State variable for user role
+  // state variables
   const [selectUser, setSelectUser] = useState(null);
   const navigate = useNavigate();
 
@@ -12,7 +12,7 @@ const SignUp = () => {
       <button onClick={() => navigate(-1)}>Back</button>
       
           <h2>Select Role:</h2>
-          <Link to="/SignUpDentist"><button>Personnel</button></Link>
+          <Link to="/SignUpDentistOwner"><button>Personnel</button></Link>
           <Link to="/SignUpPatient"><button>Patient</button></Link>
     </div>
   );

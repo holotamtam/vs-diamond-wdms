@@ -5,11 +5,13 @@ import { ref, onValue, remove } from "firebase/database";
 import ViewInsurance from "../../components/ViewInsurance";
 
 const PatientAppointmentStatus = () => {
+  // State variables
   const [currentUser, setCurrentUser] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [selectedInsuranceDetails, setSelectedInsuranceDetails] = useState(null);
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
 
+  // Fetch current user and appointments on component mount
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user ? user : null);
@@ -17,12 +19,14 @@ const PatientAppointmentStatus = () => {
     return () => unsubscribe();
   }, []);
 
+  // Fetch appointments when current user changes
   useEffect(() => {
     if (currentUser) {
       fetchAppointments();
     }
   }, [currentUser]);
 
+  // Fetch appointments from Firebase
   const fetchAppointments = () => {
     const appointmentsRef = ref(db, "appointments");
     onValue(appointmentsRef, (snapshot) => {
@@ -44,6 +48,7 @@ const PatientAppointmentStatus = () => {
     });
   };
 
+  // Cancel appointment function
   const cancelAppointment = async (appointmentId, date) => {
     const appointmentRef = ref(db, `appointments/${date}/${appointmentId}`);
     try {
@@ -58,12 +63,13 @@ const PatientAppointmentStatus = () => {
     }
   };
 
+  // View insurance details function
   const viewInsuranceDetails = (insuranceDetails) => {
     setSelectedInsuranceDetails(insuranceDetails);
     setShowInsuranceModal(true);
   };
 
-  // Helper function to format time in AM/PM format
+  // Format time in AM/PM format
   const formatTime = (time) => {
     const [hours, minutes] = time.split(":").map(Number);
     const ampm = hours >= 12 ? "PM" : "AM";
@@ -72,7 +78,7 @@ const PatientAppointmentStatus = () => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
-  // Helper function to calculate the end time
+  // Calculate end time based on start time and duration
   const calculateEndTime = (startTime, duration) => {
     const [hours, minutes] = startTime.split(":").map(Number);
     const totalMinutes = hours * 60 + minutes + duration;

@@ -6,6 +6,7 @@ const DashboardPatient = () => {
   const navigate = useNavigate();
   const auth = getAuth();
 
+  // Function to handle logout
   const handleLogout = () => {
     signOut(auth).then(() => {
       navigate('/', { replace: true });

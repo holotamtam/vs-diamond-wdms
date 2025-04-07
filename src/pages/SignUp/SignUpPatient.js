@@ -11,6 +11,7 @@ import {
 
 
 const SignUpPatient = () => {
+  // state variables
   const [email, setEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
   const [userConfirmPassword, setUserConfirmPassword] = useState("");
@@ -25,8 +26,14 @@ const SignUpPatient = () => {
   const [gender, setGender] = useState("");
 
   const navigate = useNavigate();
+  // calls the Firebase Authentication service.
   const auth = getAuth(app);
 
+  // regex pattern for email and password validation
+  const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;
+
+  // handleSubmit function to handle the form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -53,13 +60,11 @@ const SignUpPatient = () => {
       return;
     }
 
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailPattern.test(email)) {
       alert("Invalid email. Please enter a Gmail or Yahoo email.");
       return;
     }
 
-    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;
     if (userPassword.toString().length < 8) {
       alert("Password must be at least 8 characters long.");
       return;
@@ -74,7 +79,6 @@ const SignUpPatient = () => {
       return;
     }
 
-
     try {
 
       /*
@@ -86,11 +90,11 @@ const SignUpPatient = () => {
       }
       */
 
-      // Create user in Firebase Authentication
+      // creates the user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
       const user = userCredential.user;
       
-      // Save additional user info in the Realtime Database
+      // saves the user info in the Realtime Database
       const db = getDatabase(app);
       const newDocRef = push(ref(db, "users/Patient"));
       await set(newDocRef, {
@@ -111,14 +115,13 @@ const SignUpPatient = () => {
       alert("Registration successful for Patient");
       navigate("/DashboardPatient");
     } catch (error) {
-       // If the error is due to the email already in use, alert and exit.
+       // if the email already in use, alert and exit.
        if (error.code === "auth/email-already-in-use") {
         alert("This email is already in use. Please use a different email or sign in.");
         return;
       }
     }
   };
-
 
   return (
     <div>

@@ -9,9 +9,11 @@ import {
   fetchSignInMethodsForEmail, 
 } from "firebase/auth";
 
-const SignUpClinicStaff = () => {
-
+const SignUpDentistOwner = () => {
   // state variables
+  const [personnelAuthStep, setPersonnelAuthStep] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
   const [userConfirmPassword, setUserConfirmPassword] = useState("");
@@ -24,7 +26,7 @@ const SignUpClinicStaff = () => {
   const [birthDate, setBirthDate] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
-
+  
   const navigate = useNavigate();
   // calls the Firebase Authentication service.
   const auth = getAuth(app);
@@ -32,7 +34,15 @@ const SignUpClinicStaff = () => {
   // regex pattern for email and password validation
   const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;
-  
+
+  const handlePersonnelAuth = () => {
+    if (username === "personnel" && password === "123456") {
+      setPersonnelAuthStep(true);
+    } else {
+      alert(`Invalid credentials.`);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -93,9 +103,9 @@ const SignUpClinicStaff = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
       const user = userCredential.user;
       
-      // saves the user info in the Realtime Database
+      /// saves the user info in the Realtime Database
       const db = getDatabase(app);
-      const newDocRef = push(ref(db, "users/Personnel/ClinicStaff"));
+      const newDocRef = push(ref(db, "users/Personnel/DentistOwner"));
       await set(newDocRef, {
         uid: user.uid,
         email,
@@ -111,8 +121,8 @@ const SignUpClinicStaff = () => {
         gender,
       });
 
-      alert("Registration successful for Clinic Staff");
-      navigate("/DashboardDentist");
+      alert("Registration successful for Dentist Owner");
+      navigate("/DashboardDentistOwner");
     } catch (error) {
       // If the email already in use, alert and exit.
       if (error.code === "auth/email-already-in-use") {
@@ -124,38 +134,62 @@ const SignUpClinicStaff = () => {
 
   return (
     <div>
-        <button onClick={() => navigate(-1)}>Back</button>
+      <button onClick={() => navigate(-1)}>Back</button>
 
+      {!personnelAuthStep ? (
+        <div>
+          <h3>Enter credentials | Personnel Authentication!</h3>
+          <h4>Predefined Credentials</h4>
+          <div>
+            <label><h5>Username: personnel</h5></label>
+            <label><h5>Password: 123456</h5></label>
+          </div>
+          <label>Username:</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <label>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button onClick={handlePersonnelAuth}>Submit</button>
+        </div>
+      ) : (
         <SignUpForm
-            title="Signup as Clinic Staff"
-            firstName={firstName}
-            setFirstName={setFirstName}
-            middleName={middleName}
-            setMiddleName={setMiddleName}
-            lastName={lastName}
-            setLastName={setLastName}
-            address={address}
-            setAddress={setAddress}
-            contactNumber={contactNumber}
-            setContactNumber={setContactNumber}
-            civilStatus={civilStatus}
-            setCivilStatus={setCivilStatus}
-            birthDate={birthDate}
-            setBirthDate={setBirthDate}
-            age={age}
-            setAge={setAge}
-            gender={gender}
-            setGender={setGender}
-            email={email}
-            setEmail={setEmail}
-            userPassword={userPassword}
-            setUserPassword={setUserPassword}
-            userConfirmPassword={userConfirmPassword}
-            setUserConfirmPassword={setUserConfirmPassword}
-            handleSubmit={handleSubmit}
+          title="Signup as Dentist Owner"
+          firstName={firstName}
+          setFirstName={setFirstName}
+          middleName={middleName}
+          setMiddleName={setMiddleName}
+          lastName={lastName}
+          setLastName={setLastName}
+          address={address}
+          setAddress={setAddress}
+          contactNumber={contactNumber}
+          setContactNumber={setContactNumber}
+          civilStatus={civilStatus}
+          setCivilStatus={setCivilStatus}
+          birthDate={birthDate}
+          setBirthDate={setBirthDate}
+          age={age}
+          setAge={setAge}
+          gender={gender}
+          setGender={setGender}
+          email={email}
+          setEmail={setEmail}
+          userPassword={userPassword}
+          setUserPassword={setUserPassword}
+          userConfirmPassword={userConfirmPassword}
+          setUserConfirmPassword={setUserConfirmPassword}
+          handleSubmit={handleSubmit}
         />
+      )}
     </div>
   );
 };
 
-export default SignUpClinicStaff;
+export default SignUpDentistOwner;

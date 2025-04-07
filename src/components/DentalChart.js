@@ -6,9 +6,11 @@ import { ReactComponent as ToothChart } from "../images/ToothChart.svg";
 const teeth = Array.from({ length: 32 }, (_, i) => i + 1);
 
 const DentalChart = ({ uid }) => {
+  // state variables
   const [selectedTooth, setSelectedTooth] = useState(null);
   const [toothStatus, setToothStatus] = useState({});
 
+  // Fetching tooth status from Firebase
   useEffect(() => {
     if (uid) {
       const toothStatusRef = ref(db, `users/Patient/${uid}/toothStatus`);
@@ -20,10 +22,12 @@ const DentalChart = ({ uid }) => {
     }
   }, [uid]);
 
+  // Function to handle tooth click
   const handleToothClick = (tooth) => {
     setSelectedTooth(tooth);
   };
 
+  // Function to handle status change
   const handleStatusChange = async (event) => {
     const status = event.target.value;
     setToothStatus({
