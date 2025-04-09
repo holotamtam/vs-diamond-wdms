@@ -179,3 +179,5 @@ const PatientInsuranceForm = ({ onSubmit, onClose, initialData = {} }) => {
 }
 
 export default PatientInsuranceForm;
+
+
