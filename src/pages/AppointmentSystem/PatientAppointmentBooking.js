@@ -11,7 +11,6 @@ import PatientInsuranceForm from "./PatientInsuranceForm";
 Modal.setAppElement("#root");
 
 const PatientAppointmentBooking = () => {
-  // state variables
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedServices, setSelectedServices] = useState([]);
@@ -24,7 +23,6 @@ const PatientAppointmentBooking = () => {
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
 
-  // Fetch current user from Firebase Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user ? user : null);
@@ -32,25 +30,24 @@ const PatientAppointmentBooking = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch appointments for the selected date
   useEffect(() => {
     if (!selectedDate) return;
     fetchAppointmentsForDate();
   }, [selectedDate]);
 
-  // Fetch dentists from Firebase Database
   useEffect(() => {
     fetchDentists();
   }, []);
 
-  // Fetch appointments for the selected date from Firebase Database
   const fetchAppointmentsForDate = () => {
     const formattedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
     )
       .toISOString()
       .split("T")[0];
-    const appointmentsRef = ref(db, `appointments/${formattedDate}`);
+
+    
+  const appointmentsRef = ref(db, `appointments/${formattedDate}`);
     onValue(appointmentsRef, (snapshot) => {
       const data = snapshot.val();
       const fetched = data
@@ -60,7 +57,6 @@ const PatientAppointmentBooking = () => {
     });
   };
 
-  // Fetch dentists from Firebase Database
   const fetchDentists = () => {
     const dentistsRef = ref(db, "users/Personnel/Dentist");
     onValue(dentistsRef, (snapshot) => {
@@ -75,7 +71,6 @@ const PatientAppointmentBooking = () => {
     });
   };
 
-  // Toggle service selection
   const toggleService = (service) => {
     setSelectedServices((prevSelected) =>
       prevSelected.includes(service)
@@ -84,7 +79,6 @@ const PatientAppointmentBooking = () => {
     );
   };
 
-  // Format time from minutes to HH:MM AM/PM
   const formatTime = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -94,7 +88,6 @@ const PatientAppointmentBooking = () => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
-  // Generate available time slots based on appointments
   const generateTimeSlots = () => {
     const officeStartTime = 9 * 60; // 9:00 AM in minutes
     const officeEndTime = 17 * 60; // 5:00 PM in minutes
@@ -123,7 +116,6 @@ const PatientAppointmentBooking = () => {
     return slots;
   };
 
-  // Handle appointment submission
   const handleAppointmentSubmit = () => {
     if (!selectedDate || selectedServices.length === 0 || !selectedTimeSlot || !selectedDentist) {
       setBookingStatus("Please select a date, services, time slot, and dentist.");
@@ -133,7 +125,6 @@ const PatientAppointmentBooking = () => {
     setShowInsuranceModal(true);
   };
 
-  // Confirm insurance and proceed to submit appointment
   const confirmInsuranceAndSubmit = (insuranceStatus) => {
     setShowInsuranceModal(false);
 
@@ -144,13 +135,11 @@ const PatientAppointmentBooking = () => {
     }
   };
 
-  // Handle insurance form submission
   const handleInsuranceFormSubmit = (insuranceDetails) => {
     setShowInsuranceForm(false);
     submitAppointment(true, insuranceDetails);
   };
 
-  // Submit appointment to Firebase Database
   const submitAppointment = async (hasInsurance, insuranceDetails = null) => {
     const formattedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
