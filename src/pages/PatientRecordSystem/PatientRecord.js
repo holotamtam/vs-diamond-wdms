@@ -13,6 +13,7 @@ const PatientRecord = () => {
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
 
+  // Function to handle user authentication state changes/
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {

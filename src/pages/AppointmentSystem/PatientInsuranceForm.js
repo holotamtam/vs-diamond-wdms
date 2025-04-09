@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 
 const PatientInsuranceForm = ({ onSubmit, onClose, initialData = {} }) => {
-  const [name, setName] = useState(initialData.name || ""); // State to store the patient's name
-  const [companyName, setCompanyName] = useState(initialData.companyName || ""); // State to store the company name
-  const [contactNumber, setContactNumber] = useState(initialData.contactNumber || ""); // State to store the contact number
-  const [hmoCard, setHmoCard] = useState(initialData.hmoCard || ""); // State to store the HMO card
-  const [hmoAccountNumber, setHmoAccountNumber] = useState(initialData.hmoAccountNumber || ""); // State to store the HMO account number
-  const [validGovernmentID, setValidGovernmentID] = useState(initialData.validGovernmentID || ""); // State to store the valid government ID
-  const [validGovernmentIDNumber, setValidGovernmentIDNumber] = useState(initialData.validGovernmentIDNumber || ""); // State to store the valid government ID number
-  const [birthdate, setBirthdate] = useState(initialData.birthdate || ""); // State to store the birthdate
-  const [relationship, setRelationship] = useState(initialData.relationship || ""); // State to store the relationship
+  // State variables 
+  const [name, setName] = useState(initialData.name || ""); 
+  const [companyName, setCompanyName] = useState(initialData.companyName || ""); 
+  const [contactNumber, setContactNumber] = useState(initialData.contactNumber || ""); 
+  const [hmoCard, setHmoCard] = useState(initialData.hmoCard || ""); 
+  const [hmoAccountNumber, setHmoAccountNumber] = useState(initialData.hmoAccountNumber || ""); 
+  const [validGovernmentID, setValidGovernmentID] = useState(initialData.validGovernmentID || ""); 
+  const [validGovernmentIDNumber, setValidGovernmentIDNumber] = useState(initialData.validGovernmentIDNumber || ""); 
+  const [birthdate, setBirthdate] = useState(initialData.birthdate || ""); 
+  const [relationship, setRelationship] = useState(initialData.relationship || ""); 
 
   // Function to handle form submission
   const handleSubmit = async (e) => {

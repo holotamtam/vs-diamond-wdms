@@ -8,7 +8,8 @@ import TreatmentHistory from "../../components/TreatmentHistory";
 
 Modal.setAppElement("#root");
 
-const ClinicStaffPatientRecord = () => {
+const PersonnelPatientRecord = () => {
+  // State variables
   const [appointments, setAppointments] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientRecords, setPatientRecords] = useState([]);
@@ -22,11 +23,13 @@ const ClinicStaffPatientRecord = () => {
   const [showTreatmentHistory, setShowTreatmentHistory] = useState(false);
   const [showDentalChart, setShowDentalChart] = useState(false);
 
+  // Fetch all appointments and patients when the component mounts
   useEffect(() => {
     fetchAllAppointments();
     fetchAllPatients();
   }, []);
 
+  // Function to fetch all appointments from Firebase database
   const fetchAllAppointments = () => {
     const appointmentsRef = ref(db, "appointments");
 
@@ -46,6 +49,7 @@ const ClinicStaffPatientRecord = () => {
     });
   };
 
+  // Function to fetch all patients from Firebase database
   const fetchAllPatients = () => {
     const usersRef = ref(db, "users/Patient");
 
@@ -75,6 +79,7 @@ const ClinicStaffPatientRecord = () => {
     });
   };
 
+  // Function to handle patient selection
   const handlePatientClick = (email) => {
     const patient = patients.find((patient) => patient.email === email);
     setSelectedPatient(email);
@@ -86,24 +91,29 @@ const ClinicStaffPatientRecord = () => {
     setPatientRecords(patientAppointments);
   };
 
+  // Function to handle viewing insurance details
   const handleViewInsuranceDetails = (appointment) => {
     setInsuranceDetails(appointment.insuranceDetails);
     setShowInsuranceForm(true);
   };
-
+  
+  // Function to handle closing the insurance form modal
   const handleInsuranceClose = () => {
     setShowInsuranceForm(false);
     setInsuranceDetails(null);
   };
 
+  // Function to handle closing the treatment history modal
   const handleTreatmentHistoryClose = () => {
     setShowTreatmentHistory(false);
   };
 
+  // Function to handle closing the dental chart modal
   const handleDentalChartClose = () => {
     setShowDentalChart(false);
   };
 
+  // Function to format time from 24-hour to 12-hour format
   const formatTime = (time) => {
     const [hour, minute] = time.split(":").map(Number);
     const ampm = hour >= 12 ? "PM" : "AM";
@@ -112,6 +122,7 @@ const ClinicStaffPatientRecord = () => {
     return `${formattedHour}:${formattedMinute} ${ampm}`;
   };
 
+  // Function to handle search input change
   const handleSearch = (event) => {
     const term = event.target.value.toLowerCase();
     setSearchTerm(term);
@@ -138,7 +149,7 @@ const ClinicStaffPatientRecord = () => {
   return (
     <div>
       <button>
-        <a href="/DashboardClinicStaff">Go Back to Dashboard</a>
+        <a href="/DashboardDentistOwner">Go Back to Dashboard</a>
       </button>
       <h2>Patient Records</h2>
       <input
@@ -245,4 +256,4 @@ const ClinicStaffPatientRecord = () => {
   );
 };
 
-export default ClinicStaffPatientRecord;
+export default PersonnelPatientRecord;

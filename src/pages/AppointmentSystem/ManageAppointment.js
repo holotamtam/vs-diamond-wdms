@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, auth } from "../../backend/firebaseConfig";
+import { db } from "../../backend/firebaseConfig";
 import Calendar from "react-calendar";
 import { ref, onValue, remove, update } from "firebase/database";
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
-import ServicesList from "../../components/ServicesList"; // Import the ServicesList component
+import ServicesList from "../../components/ServicesList";
 
 Modal.setAppElement("#root");
 
-const ClinicStaffManageAppointment = () => {
+const ManageAppointment = () => {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [insuranceDetails, setInsuranceDetails] = useState(null);
@@ -19,7 +19,7 @@ const ClinicStaffManageAppointment = () => {
   const [editFormData, setEditFormData] = useState({ services: [] });
   const navigate = useNavigate();
 
-  // Fetch appointments for the selected date
+  // fetch appointments for the selected date
   useEffect(() => {
     if (!selectedDate) return;
     const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
@@ -33,7 +33,7 @@ const ClinicStaffManageAppointment = () => {
     });
   }, [selectedDate]);
 
-  // Handle date change
+  // handle date change
   const handleDateChange = (date) => setSelectedDate(date);
 
   // Handle appointment cancellation
@@ -153,7 +153,7 @@ const ClinicStaffManageAppointment = () => {
   return (
     <div>
       <button>
-        <a href="/DashboardClinicStaff">Go Back to Dashboard</a>
+        <a href="/DashboardDentistOwner">Go Back to Dashboard</a>
       </button>
       <div style={{ padding: "20px" }}>
         <h1>Manage Appointments</h1>
@@ -373,4 +373,4 @@ const ClinicStaffManageAppointment = () => {
   );
 };
 
-export default ClinicStaffManageAppointment;
+export default ManageAppointment;
