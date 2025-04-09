@@ -29,13 +29,13 @@ import Services from './pages/Services/Services';
 import NoPage from './pages/NoPage/NoPage';
 
 // Import User Account System Pages
-import SignIn from './pages/SignIn/SignIn';
-import SignUp from './pages/SignUp/SignUp';
-import SignUpPatient from './pages/SignUp/SignUpPatient';
-import SignUpDentistOwner from './pages/SignUp/SignUpDentistOwner';
-import SignUpAssociateDentist from './pages/SignUp/SignUpAssociateDentist';
-import SignUpClinicStaff from './pages/SignUp/SignUpClinicStaff';
-import ManagePersonnel from './pages/ManagePersonnel/ManagePersonnel';
+import SignIn from './pages/UserAccountSystem/SignIn';
+import SignUp from './pages/UserAccountSystem/SignUp';
+import SignUpPatient from './pages/UserAccountSystem/SignUpPatient';
+import SignUpDentistOwner from './pages/UserAccountSystem/SignUpDentistOwner';
+import SignUpAssociateDentist from './pages/UserAccountSystem/SignUpAssociateDentist';
+import SignUpClinicStaff from './pages/UserAccountSystem/SignUpClinicStaff';
+import ManagePersonnel from './pages/UserAccountSystem/ManagePersonnel';
 
 // Import Dashboards
 import DashboardPatient from './pages/dashboard/DashboardPatient';
