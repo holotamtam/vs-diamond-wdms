@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getDatabase, ref, set, onValue, remove } from "firebase/database";
+import { useLocation, useNavigate } from "react-router-dom";
+
 
 const ManageInventory = () => {
   // state variables
@@ -9,6 +11,10 @@ const ManageInventory = () => {
   const [pricePerUnit, setPricePerUnit] = useState("");
   const [quantity, setQuantity] = useState("");
   const [inventoryList, setInventoryList] = useState([]);
+  const location = useLocation(); // Get the current location
+  const navigate = useNavigate(); // Initialize the navigate function
+  const userRole = location.state?.userRole; // Get the user role from the state
+
 
   // Calculate total cost based on price per unit and quantity
   const totalCost = (parseFloat(pricePerUnit) || 0) * (parseInt(quantity) || 0);
@@ -71,10 +77,23 @@ const ManageInventory = () => {
     setEditingKey(null);
   };
 
+
+  const handleGoBack = () => {
+    if (userRole === "DentistOwner") {
+      navigate("/DashboardDentistOwner",);
+    }else if (userRole === "AssociateDentist") {
+      navigate("/DashboardAssociateDentist",);
+    }else if (userRole === "ClinicStaff") {
+      navigate("/DashboardClinicStaff",);
+    }else {
+      alert("Unable to determine your role. Redirecting to the home page.");
+      navigate("/"); // Default to home if role is not determined
+    }
+  };
+
   return (
     <div style={{ padding: "20px" }}>
-      <button>
-        <a href="/DashboardDentistOwner">Go Back to Dashboard</a>
+      <button onClick={handleGoBack}> Go Back to Dashboard
       </button>
 
       <h2>Inventory</h2>

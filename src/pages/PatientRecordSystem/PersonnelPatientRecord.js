@@ -5,6 +5,7 @@ import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
 import DentalChart from "../../components/DentalChart";
 import TreatmentHistory from "../../components/TreatmentHistory";
+import { useLocation, useNavigate } from "react-router-dom";
 
 Modal.setAppElement("#root");
 
@@ -22,6 +23,9 @@ const PersonnelPatientRecord = () => {
   const [selectedPatientInfo, setSelectedPatientInfo] = useState(null);
   const [showTreatmentHistory, setShowTreatmentHistory] = useState(false);
   const [showDentalChart, setShowDentalChart] = useState(false);
+  const location = useLocation(); // Get the current location
+  const navigate = useNavigate(); // Initialize the navigate function
+  const userRole = location.state?.userRole; // Get the user role from the state
 
   // Fetch all appointments and patients when the component mounts
   useEffect(() => {
@@ -146,11 +150,22 @@ const PersonnelPatientRecord = () => {
     setFilteredPatients(filtered);
   };
 
+  const handleGoBack = () => {
+      if (userRole === "DentistOwner") {
+        navigate("/DashboardDentistOwner",);
+      }else if (userRole === "AssociateDentist") {
+        navigate("/DashboardAssociateDentist",);
+      }else if (userRole === "ClinicStaff") {
+        navigate("/DashboardClinicStaff",);
+      }else {
+            alert("Unable to determine your role. Redirecting to the home page.");
+            navigate("/"); // Default to home if role is not determined
+          }
+    };
+
   return (
     <div>
-      <button>
-        <a href="/DashboardDentistOwner">Go Back to Dashboard</a>
-      </button>
+      <button onClick ={handleGoBack}>Go Back to Dashboard </button>
       <h2>Patient Records</h2>
       <input
         type="text"

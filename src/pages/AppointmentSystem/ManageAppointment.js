@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { db } from "../../backend/firebaseConfig";
 import Calendar from "react-calendar";
 import { ref, onValue, remove, update } from "firebase/database";
@@ -18,6 +18,10 @@ const ManageAppointment = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editFormData, setEditFormData] = useState({ services: [] });
   const navigate = useNavigate();
+  const location = useLocation();
+
+   // Retrieve userRole from navigation state
+   const userRole = location.state?.userRole || "";
 
   // fetch appointments for the selected date
   useEffect(() => {
@@ -150,11 +154,22 @@ const ManageAppointment = () => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
+  const handleGoBack = () => {
+    if (userRole === "DentistOwner") {
+      navigate("/DashboardDentistOwner");
+    } else if (userRole === "AssociateDentist") {
+      navigate("/DashboardAssociateDentist");
+    } else if (userRole === "ClinicStaff") {
+      navigate("/DashboardClinicStaff");
+    } else {
+      alert("Unable to determine your role. Redirecting to the home page.");
+      navigate("/"); // Default to home if role is not determined
+    }
+  };
+
   return (
     <div>
-      <button>
-        <a href="/DashboardDentistOwner">Go Back to Dashboard</a>
-      </button>
+      <button onClick={handleGoBack}>Go Back to Dashboard</button>
       <div style={{ padding: "20px" }}>
         <h1>Manage Appointments</h1>
         <h2>Select Date:</h2>
