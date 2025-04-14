@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { db } from "../../backend/firebaseConfig";
 import Calendar from "react-calendar";
-import { ref, onValue, remove, update } from "firebase/database";
+import { ref, onValue, remove, update, push } from "firebase/database";
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
 import ServicesList from "../../components/ServicesList";
@@ -19,9 +19,29 @@ const ManageAppointment = () => {
   const [editFormData, setEditFormData] = useState({ services: [] });
   const navigate = useNavigate();
   const location = useLocation();
+  const encodeEmail = (email) => email.replace(/\./g, ",");
+  const decodeEmail = (encodedEmail) => encodedEmail.replace(/,/g, ".");
 
    // Retrieve userRole from navigation state
    const userRole = location.state?.userRole || "";
+
+   const addNotification = async (email, message) => {
+    const encodedEmail = encodeEmail(email); // Encode the email
+    const notificationsRef = ref(db, `notifications/${encodedEmail}`); // Reference to the notifications node
+    const newNotification = {
+      message,
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+  
+    try {
+      const newNotificationRef = await push(notificationsRef, newNotification); // Push the notification to Firebase
+      console.log("Notification added successfully with ID:", newNotificationRef.key);
+    } catch (error) {
+      console.error("Error adding notification:", error);
+    }
+  };
+
 
   // fetch appointments for the selected date
   useEffect(() => {
@@ -37,25 +57,35 @@ const ManageAppointment = () => {
     });
   }, [selectedDate]);
 
+
+
   // handle date change
   const handleDateChange = (date) => setSelectedDate(date);
 
   // Handle appointment cancellation
   const handleCancelAppointment = async (id) => {
     if (!window.confirm("Do you want to cancel this appointment?")) return;
-
+  
     const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-
+  
     try {
       await remove(appointmentRef);
       setAppointments((prev) => prev.filter((appointment) => appointment.id !== id));
+  
+      // Add notification for the patient
+      const appointment = appointments.find((appt) => appt.id === id);
+  if (appointment) {
+    const message = "Your appointment has been canceled.";
+    addNotification(appointment.userId, message); // Add notification for the patient
+  }
     } catch (error) {
       console.error("Error canceling appointment:", error);
     }
   };
+
 
   // Handle viewing insurance details
   const handleViewInsuranceDetails = (appointment) => {
@@ -74,14 +104,16 @@ const ManageAppointment = () => {
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-
+  
     try {
       await update(appointmentRef, { status: "Confirmed" });
-      setAppointments((prev) =>
-        prev.map((appointment) =>
-          appointment.id === id ? { ...appointment, status: "Confirmed" } : appointment
-        )
-      );
+  
+      // Add notification for the patient
+      const appointment = appointments.find((appt) => appt.id === id);
+      if (appointment) {
+        const message = "Your appointment has been confirmed.";
+        addNotification(appointment.userId, message); // Add notification for the patient
+      }
     } catch (error) {
       console.error("Error confirming appointment:", error);
     }
@@ -93,14 +125,16 @@ const ManageAppointment = () => {
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-
+  
     try {
       await update(appointmentRef, { status: "Completed" });
-      setAppointments((prev) =>
-        prev.map((appointment) =>
-          appointment.id === id ? { ...appointment, status: "Completed" } : appointment
-        )
-      );
+  
+      // Add notification for the patient
+      const appointment = appointments.find((appt) => appt.id === id);
+  if (appointment) {
+    const message = `Your appointment has been completed. Dentist remarks: '${appointment.dentistRemarks || "No remarks"}'`;
+    addNotification(appointment.userId, message); // Add notification for the patient
+  }
     } catch (error) {
       console.error("Error completing appointment:", error);
     }
@@ -120,9 +154,57 @@ const ManageAppointment = () => {
         .toISOString()
         .split("T")[0];
       const appointmentRef = ref(db, `appointments/${formattedDate}/${editingAppointmentId}`);
-      await update(appointmentRef, formData);
-      setEditingAppointmentId(null);
-      setEditFormData({ services: [] });
+  
+      // Find the original appointment
+      const originalAppointment = appointments.find((appt) => appt.id === editingAppointmentId);
+  
+      try {
+        // Update the appointment in the database
+        await update(appointmentRef, formData);
+  
+        // Calculate start and end times
+        const startTimeMinutes =
+          parseInt(originalAppointment.time.split(":")[0]) * 60 +
+          parseInt(originalAppointment.time.split(":")[1]);
+        const endTimeMinutes = startTimeMinutes + originalAppointment.duration;
+        const formattedStartTime = formatTime(startTimeMinutes);
+        const formattedEndTime = formatTime(endTimeMinutes);
+  
+        // Check if the status has changed
+        if (originalAppointment && originalAppointment.status !== formData.status) {
+          let message = "";
+          if (formData.status === "Confirmed") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
+          } else if (formData.status === "Completed") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
+          } else if (formData.status === "Pending") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
+          }
+  
+          // Add a notification for the patient
+          if (message) {
+            addNotification(originalAppointment.userId, message);
+          }
+        }
+  
+        // Check if the dentist remarks have changed
+        if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
+          const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
+          addNotification(originalAppointment.userId, remarksMessage);
+        }
+  
+        // Update the local state
+        setAppointments((prevAppointments) =>
+          prevAppointments.map((appt) =>
+            appt.id === editingAppointmentId ? { ...appt, ...formData } : appt
+          )
+        );
+  
+        setEditingAppointmentId(null);
+        setEditFormData({ services: [] });
+      } catch (error) {
+        console.error("Error updating appointment:", error);
+      }
     }
     setShowEditForm(false);
   };

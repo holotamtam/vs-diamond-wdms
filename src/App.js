@@ -47,6 +47,7 @@ import DashboardClinicStaff from './pages/dashboard/DashboardClinicStaff';
 import PatientAppointmentBooking from './pages/AppointmentSystem/PatientAppointmentBooking';
 import PatientAppointmentStatus from './pages/AppointmentSystem/PatientAppointmentStatus';
 import ManageAppointment from './pages/AppointmentSystem/ManageAppointment';
+import Notification from './pages/AppointmentSystem/Notification';
 
 // Import Patient Record System Pages
 import PatientRecord from './pages/PatientRecordSystem/PatientRecord';
@@ -74,7 +75,7 @@ function App() {
           <Route path="SignUpClinicStaff" element={<SignUpClinicStaff />} />
           <Route path="ManagePersonnel" element={<ManagePersonnel />} />
 
-          {/* Dashboards */}
+          {/* User Dashboards */}
           <Route path="DashboardPatient" element={<DashboardPatient />} />
           <Route path="DashboardDentistOwner" element={<DashboardDentistOwner />} />
           <Route path="DashboardAssociateDentist" element={<DashboardAssociateDentist />} />
@@ -84,6 +85,7 @@ function App() {
           <Route path="PatientAppointmentBooking" element={<PatientAppointmentBooking />} />
           <Route path="PatientAppointmentStatus" element={<PatientAppointmentStatus />} />
           <Route path="ManageAppointment" element={<ManageAppointment />} />
+          <Route path="Notifications" element={<Notification />} />
 
           {/* Patient Record System */}
           <Route path="PatientRecord" element={<PatientRecord />} />

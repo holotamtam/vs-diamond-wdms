@@ -58,16 +58,37 @@ const PatientAppointmentBooking = () => {
   };
 
   const fetchDentists = () => {
-    const dentistsRef = ref(db, "users/Personnel/Dentist");
-    onValue(dentistsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const dentistList = Object.entries(data).map(([id, value]) => ({
-          id,
-          name: `Dr. ${value.firstName} ${value.lastName}`,
-        }));
-        setDentists(dentistList);
-      }
+    const dentistOwnerRef = ref(db, "users/Personnel/DentistOwner");
+    const associateDentistRef = ref(db, "users/Personnel/AssociateDentist");
+  
+    // Fetch dentists from both paths
+    Promise.all([
+      new Promise((resolve) => {
+        onValue(dentistOwnerRef, (snapshot) => {
+          const data = snapshot.val();
+          const dentistOwners = data
+            ? Object.entries(data).map(([id, value]) => ({
+                id,
+                name: `Dr. ${value.firstName} ${value.lastName} (Owner)`,
+              }))
+            : [];
+          resolve(dentistOwners);
+        });
+      }),
+      new Promise((resolve) => {
+        onValue(associateDentistRef, (snapshot) => {
+          const data = snapshot.val();
+          const associateDentists = data
+            ? Object.entries(data).map(([id, value]) => ({
+                id,
+                name: `Dr. ${value.firstName} ${value.lastName} (Associate)`,
+              }))
+            : [];
+          resolve(associateDentists);
+        });
+      }),
+    ]).then(([dentistOwners, associateDentists]) => {
+      setDentists([...dentistOwners, ...associateDentists]);
     });
   };
 

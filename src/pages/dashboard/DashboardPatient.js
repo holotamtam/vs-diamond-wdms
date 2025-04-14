@@ -45,6 +45,11 @@ const DashboardPatient = () => {
                 Appointment Status
               </Link>
             </li>
+            <li style={{ marginBottom: "10px" }}>
+              <Link to="/Notifications" style={{ textDecoration: "none", color: "#333" }}>
+                Notifications
+              </Link>
+            </li>
           </ul>
         </div>
         <button
