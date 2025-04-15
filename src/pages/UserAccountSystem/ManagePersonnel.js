@@ -1,33 +1,50 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { getDatabase, ref, get, remove } from "firebase/database";
+import { getAuth } from "firebase/auth";
 import app from "../../backend/firebaseConfig";
 
 const ManagePersonnel = () => {
-    // state variables
     const [clinicStaff, setClinicStaff] = useState([]);
     const [dentistOwner, setDentistOwner] = useState([]);
     const [associateDentist, setAssociateDentist] = useState([]);
+    const [currentUserId, setCurrentUserId] = useState(null);
 
-    const navigate = useNavigate();
+    // listen for authentication state changes to get the current user ID
+    useEffect(() => {
+        const auth = getAuth(app);
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (user) {
+                setCurrentUserId(user.uid);
+            }
+        });
 
-    // useEffect hook to fetch clinic staff and dentists from Firebase Realtime Database when the component mounts.
+        return () => unsubscribe();
+    }, []);
+
+    // fetch personnel data from Firebase Realtime Database
     useEffect(() => {
         const fetchPersonnel = async () => {
             const db = getDatabase(app);
             const clinicStaffRef = ref(db, "users/Personnel/ClinicStaff");
             const dentistOwnerRef = ref(db, "users/Personnel/DentistOwner");
             const associateDentistRef = ref(db, "users/Personnel/AssociateDentist");
-            
+
             try {
-                const [clinicStaffSnap, dentistOwnerSnap, associateDentistSnap] = await Promise.all([get(clinicStaffRef), get(dentistOwnerRef), get(associateDentistRef)]);
+                const [clinicStaffSnap, dentistOwnerSnap, associateDentistSnap] = await Promise.all([
+                    get(clinicStaffRef),
+                    get(dentistOwnerRef),
+                    get(associateDentistRef),
+                ]);
 
                 if (clinicStaffSnap.exists()) {
                     setClinicStaff(Object.entries(clinicStaffSnap.val()).map(([id, data]) => ({ id, ...data })));
                 }
+
                 if (dentistOwnerSnap.exists()) {
                     setDentistOwner(Object.entries(dentistOwnerSnap.val()).map(([id, data]) => ({ id, ...data })));
                 }
+
                 if (associateDentistSnap.exists()) {
                     setAssociateDentist(Object.entries(associateDentistSnap.val()).map(([id, data]) => ({ id, ...data })));
                 }
@@ -39,7 +56,7 @@ const ManagePersonnel = () => {
         fetchPersonnel();
     }, []);
 
-    // function that handles the deletion of dentist or clinic staff accounts.
+    // function to handle deletion of personnel accounts
     const handleDelete = async (userType, id) => {
         const db = getDatabase(app);
         const userRef = ref(db, `users/Personnel/${userType}/${id}`);
@@ -47,13 +64,12 @@ const ManagePersonnel = () => {
         try {
             await remove(userRef);
             alert(`${userType} deleted successfully!`);
-            
+
             if (userType === "ClinicStaff") {
                 setClinicStaff(clinicStaff.filter(person => person.id !== id));
             } else if (userType === "DentistOwner") {
                 setDentistOwner(dentistOwner.filter(person => person.id !== id));
-            }
-            else if (userType === "AssociateDentist") {
+            } else if (userType === "AssociateDentist") {
                 setAssociateDentist(associateDentist.filter(person => person.id !== id));
             }
         } catch (error) {
@@ -70,7 +86,6 @@ const ManagePersonnel = () => {
 
             <h2>Manage Personnel</h2>
 
-            {/* Links for adding another dentist or clinic staff */} 
             <div>
                 <Link to="/SignUpClinicStaff"><button>Add Clinic Staff</button></Link>
                 <Link to="/SignUpDentistOwner"><button>Add Dentist Owner</button></Link>
@@ -82,7 +97,7 @@ const ManagePersonnel = () => {
                 {clinicStaff.length > 0 ? (
                     clinicStaff.map(person => (
                         <li key={person.id}>
-                            {person.name} ({person.email})
+                            {person.firstName} {person.lastName} ({person.email})
                             <button onClick={() => handleDelete("ClinicStaff", person.id)}>Delete</button>
                         </li>
                     ))
@@ -91,17 +106,32 @@ const ManagePersonnel = () => {
                 )}
             </ul>
 
-            <h3>Dentists</h3>
+            <h3>Dentist Owner</h3>
             <ul>
                 {dentistOwner.length > 0 ? (
-                    dentistOwner.map(person => (
-                        <li key={person.id}>
-                            {person.name} ({person.email})
-                            <button onClick={() => handleDelete("Dentist", person.id)}>Delete</button>
-                        </li>
-                    ))
+                    dentistOwner.map(person => {
+                        const isCurrentUser = person.uid === currentUserId;
+                        return (
+                            <li
+                                key={person.id}
+                                style={{
+                                    backgroundColor: isCurrentUser ? "#e6f7ff" : "transparent",
+                                    padding: "8px",
+                                    borderRadius: "5px",
+                                    marginBottom: "6px"
+                                }}
+                            >
+                                {person.firstName} {person.lastName} ({person.email}){" "}
+                                {isCurrentUser ? (
+                                    <strong>(You)</strong>
+                                ) : (
+                                    <button onClick={() => handleDelete("DentistOwner", person.id)}>Delete</button>
+                                )}
+                            </li>
+                        );
+                    })
                 ) : (
-                    <p>No Dentists found.</p>
+                    <p>No Dentist Owner found.</p>
                 )}
             </ul>
 
@@ -110,12 +140,12 @@ const ManagePersonnel = () => {
                 {associateDentist.length > 0 ? (
                     associateDentist.map(person => (
                         <li key={person.id}>
-                            {person.name} ({person.email})
-                            <button onClick={() => handleDelete("Dentist", person.id)}>Delete</button>
+                            {person.firstName} {person.lastName} ({person.email})
+                            <button onClick={() => handleDelete("AssociateDentist", person.id)}>Delete</button>
                         </li>
                     ))
                 ) : (
-                    <p>No Dentists found.</p>
+                    <p>No Associate Dentists found.</p>
                 )}
             </ul>
         </div>
