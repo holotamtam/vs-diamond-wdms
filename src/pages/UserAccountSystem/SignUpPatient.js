@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import app from "../../backend/firebaseConfig";
 import { useNavigate } from "react-router-dom";
-import { getDatabase, ref, set, push } from "firebase/database";
+import { getDatabase, ref, set } from "firebase/database";
 import SignUpForm from "../../components/SignUpForm";
 import { 
   getAuth, 
   createUserWithEmailAndPassword,
   fetchSignInMethodsForEmail,
- } from "firebase/auth";
+} from "firebase/auth";
 
+// Utility function to encode email
+const encodeEmail = (email) => email.replace(/\./g, ",");
 
 const SignUpPatient = () => {
   // state variables
@@ -26,7 +28,6 @@ const SignUpPatient = () => {
   const [gender, setGender] = useState("");
 
   const navigate = useNavigate();
-  // calls the Firebase Authentication service.
   const auth = getAuth(app);
 
   // regex pattern for email and password validation
@@ -80,24 +81,23 @@ const SignUpPatient = () => {
     }
 
     try {
-
-      /*
       // Check if the email is already in use
       const methods = await fetchSignInMethodsForEmail(auth, email);
       if (methods.length > 0) {
         alert("This email is already in use. Please use a different email.");
         return;
       }
-      */
 
-      // creates the user in Firebase Authentication
+      // Create the user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
       const user = userCredential.user;
-      
-      // saves the user info in the Realtime Database
+
+      // Encode the email to use as the UID
+      const encodedEmail = encodeEmail(email);
+
+      // Save the user info in the Realtime Database
       const db = getDatabase(app);
-      const newDocRef = push(ref(db, "users/Patient"));
-      await set(newDocRef, {
+      await set(ref(db, `users/Patient/${encodedEmail}`), {
         uid: user.uid,
         email,
         userPassword,
@@ -115,10 +115,12 @@ const SignUpPatient = () => {
       alert("Registration successful for Patient");
       navigate("/DashboardPatient");
     } catch (error) {
-       // if the email already in use, alert and exit.
-       if (error.code === "auth/email-already-in-use") {
+      // Handle errors
+      if (error.code === "auth/email-already-in-use") {
         alert("This email is already in use. Please use a different email or sign in.");
-        return;
+      } else {
+        console.error("Error during registration:", error);
+        alert("An error occurred during registration. Please try again.");
       }
     }
   };
