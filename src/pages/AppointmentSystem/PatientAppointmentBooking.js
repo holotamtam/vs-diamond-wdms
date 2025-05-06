@@ -3,10 +3,11 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, push, onValue } from "firebase/database";
+import { ref, set, onValue } from "firebase/database";
 import Modal from "react-modal";
 import ServicesList from "../../components/ServicesList";
 import PatientInsuranceForm from "./PatientInsuranceForm";
+
 
 Modal.setAppElement("#root");
 
@@ -22,6 +23,7 @@ const PatientAppointmentBooking = () => {
   const [selectedDentist, setSelectedDentist] = useState("");
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
+  const sanitizeEmail = (email) => email.replace(/[.]/g, ",");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -179,9 +181,9 @@ const PatientAppointmentBooking = () => {
       insuranceDetails: hasInsurance ? insuranceDetails : "No",
     };
 
-    const appointmentRef = ref(db, `appointments/${formattedDate}`);
+    const appointmentRef = ref(db, `appointments/${formattedDate}/${sanitizeEmail(currentUser.email)}`);
     try {
-      await push(appointmentRef, appointmentData);
+      await set(appointmentRef, appointmentData);
       setBookingStatus("Appointment booked successfully!");
       setSelectedServices([]);
       setSelectedTimeSlot(null);
