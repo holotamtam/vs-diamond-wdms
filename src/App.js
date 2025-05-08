@@ -57,7 +57,7 @@ import PersonnelPatientRecord from './pages/PatientRecordSystem/PersonnelPatient
 import ManageInventory from './pages/InventorySystem/ManageInventory'; // WRITE or UPDATE
 
 // Import Accounting System Pages
-import RevenueReport from './pages/AccountingSystem/RevenueReport'; // WRITE or UPDATE
+import ReportRevenue from './pages/AccountingSystem/ReportRevenue'; // WRITE or UPDATE
 
 function App() {
   return (
@@ -97,7 +97,7 @@ function App() {
           <Route path="ManageInventory" element={<ManageInventory />} /> {/* WRITE or UPDATE */}
 
           {/* Accounting System */}
-          <Route path="RevenueReport" element={<RevenueReport />} /> {/* WRITE or UPDATE */}
+          <Route path="ReportRevenue" element={<ReportRevenue />} /> {/* WRITE or UPDATE */}
 
 
           {/* Error Page */}

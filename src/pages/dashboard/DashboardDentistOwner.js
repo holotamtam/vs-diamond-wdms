@@ -51,7 +51,7 @@ const DashboardDentistOwner = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenueReport" state={{ userRole: "ClinicStaff" }} style={{ textDecoration: 'none', color: '#333' }} >
+              <Link to="/ReportRevenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }} >
                Revenue
               </Link>
             </li>
