@@ -118,7 +118,7 @@ const SignUpClinicStaff = () => {
       });
 
       alert("Registration successful for Clinic Staff");
-      navigate("/DashboardDentist");
+      navigate("/DashboardClinicStaff");
     } catch (error) {
       // If the email already in use, alert and exit.
       if (error.code === "auth/email-already-in-use") {

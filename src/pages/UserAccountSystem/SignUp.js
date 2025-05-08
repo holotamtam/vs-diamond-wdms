@@ -11,7 +11,8 @@ const SignUp = () => {
       <button onClick={() => navigate(-1)}>Back</button>
       
           <h2>Select Role:</h2>
-          <Link to="/SignUpDentistOwner"><button>Personnel</button></Link>
+          <Link to="/SignUpAssociateDentist"><button>Dentist</button></Link>
+          <Link to="/SignUpClinicStaff"><button>Personnel</button></Link>
           <Link to="/SignUpPatient"><button>Patient</button></Link>
     </div>
   );
