@@ -6,12 +6,12 @@ const Index = () => {
     <div>
       <title>VSDiamond Dental Clinic | Index</title>
     
-      <Link to="/Services"><button>View Our Services</button></Link>
+      <Link to="/services"><button>View Our Services</button></Link>
       <button>Dental Portfolio</button>
 
-      <Link to="/SignIn"><button>Sign In</button></Link>
+      <Link to="/sign-in"><button>Sign In</button></Link>
 
-      <Link to="/SignUp"><button>Sign Up</button></Link>
+      <Link to="/sign-up"><button>Sign Up</button></Link>
 
   
     </div>

@@ -45,6 +45,7 @@ const DashboardClinicStaff = () => {
                 Inventory
               </Link>
             </li>
+            
           </ul>
         </div>
         <button

@@ -56,6 +56,8 @@ import PersonnelPatientRecord from './pages/PatientRecordSystem/PersonnelPatient
 // Import Inventory System Pages
 import ManageInventory from './pages/InventorySystem/ManageInventory'; // WRITE or UPDATE
 
+// Import Accounting System Pages
+import RevenueReport from './pages/AccountingSystem/RevenueReport'; // WRITE or UPDATE
 
 function App() {
   return (
@@ -64,11 +66,11 @@ function App() {
         <Routes>
           {/* Other Pages */}
           <Route path="/" element={<Index />} />
-          <Route path="Services" element={<Services />} />
+          <Route path="/services" element={<Services />} />
 
           {/* User Account System Pages */}
-          <Route path="SignIn" element={<SignIn />} /> {/* READ */}
-          <Route path="SignUp" element={<SignUp />} /> {/* WRITE */}
+          <Route path="/sign-in" element={<SignIn />} /> {/* READ */}
+          <Route path="/sign-up" element={<SignUp/>} /> {/* WRITE */}
           <Route path="SignUpPatient" element={<SignUpPatient />} /> {/* WRITE */}
           <Route path="SignUpDentistOwner" element={<SignUpDentistOwner />} /> {/* WRITE */}
           <Route path="SignUpAssociateDentist" element={<SignUpAssociateDentist />} /> {/* WRITE */}
@@ -93,6 +95,10 @@ function App() {
 
           {/* Inventory System */}
           <Route path="ManageInventory" element={<ManageInventory />} /> {/* WRITE or UPDATE */}
+
+          {/* Accounting System */}
+          <Route path="RevenueReport" element={<RevenueReport />} /> {/* WRITE or UPDATE */}
+
 
           {/* Error Page */}
           <Route path="*" element={<NoPage />} />

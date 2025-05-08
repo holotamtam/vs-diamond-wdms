@@ -3,11 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
-<<<<<<< Updated upstream
 import { ref, set, get, onValue } from "firebase/database";
-=======
-import { set, ref, onValue } from "firebase/database";
->>>>>>> Stashed changes
 import Modal from "react-modal";
 import ServicesList from "../../components/ServicesList";
 import PatientInsuranceForm from "./PatientInsuranceForm";
