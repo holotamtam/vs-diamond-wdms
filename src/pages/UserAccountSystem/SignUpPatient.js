@@ -99,17 +99,18 @@ const SignUpPatient = () => {
       const db = getDatabase(app);
       await set(ref(db, `users/Patient/${encodedEmail}`), {
         uid: user.uid,
-        email,
-        userPassword,
         firstName,
         middleName,
         lastName,
+        userPassword,
         address,
         contactNumber,
         civilStatus,
         birthDate,
         age,
         gender,
+        email,
+        role: "Patient" // Add role to the user data
       });
 
       alert("Registration successful for Patient");

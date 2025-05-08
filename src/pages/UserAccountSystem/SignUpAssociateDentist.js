@@ -9,6 +9,9 @@ import {
   fetchSignInMethodsForEmail, 
 } from "firebase/auth";
 
+// Utility function to encode email
+const encodeEmail = (email) => email.replace(/\./g, ",");
+
 const SignUpAssociateDentist = () => {
    // state variables
   const [email, setEmail] = useState("");
@@ -25,7 +28,7 @@ const SignUpAssociateDentist = () => {
   const [gender, setGender] = useState("");
   
   const navigate = useNavigate();
-  // calls the Firebase Authentication service.
+  const db = getDatabase(app);
   const auth = getAuth(app);
 
   // regex pattern for email and password validation
@@ -91,11 +94,12 @@ const SignUpAssociateDentist = () => {
       // creates the user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
       const user = userCredential.user;
+
+      // Encode the email to use as the UID
+      const encodedEmail = encodeEmail(email);
       
-      /// saves the user info in the Realtime Database
-      const db = getDatabase(app);
-      const newDocRef = push(ref(db, "users/Personnel/AssociateDentist"));
-      await set(newDocRef, {
+       // saves the user info in the Realtime Database
+      await set(ref(db, `users/Personnel/AssociateDentist/${encodedEmail}}`), {
         uid: user.uid,
         email,
         userPassword,
@@ -108,6 +112,7 @@ const SignUpAssociateDentist = () => {
         birthDate,
         age,
         gender,
+        role: "AssociateDentist",
       });
 
       alert("Registration successful for Associate Dentist");

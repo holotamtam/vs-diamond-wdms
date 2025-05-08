@@ -3,15 +3,10 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
-<<<<<<< HEAD
-import { ref, set, onValue } from "firebase/database";
-=======
-import { set, ref, onValue } from "firebase/database";
->>>>>>> d2f5880a7160a6fcb6db2987a415cffc58d5a2d8
+import { ref, set, get, onValue } from "firebase/database";
 import Modal from "react-modal";
 import ServicesList from "../../components/ServicesList";
 import PatientInsuranceForm from "./PatientInsuranceForm";
-
 
 Modal.setAppElement("#root");
 
@@ -176,6 +171,7 @@ const PatientAppointmentBooking = () => {
 
     const appointmentData = {
       userId: currentUser.email,
+      uid: currentUser.uid,
       date: formattedDate,
       services: selectedServices,
       time: `${Math.floor(selectedTimeSlot.start / 60)}:${selectedTimeSlot.start % 60 === 0 ? "00" : selectedTimeSlot.start % 60}`,

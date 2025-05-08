@@ -9,6 +9,9 @@ import {
   fetchSignInMethodsForEmail, 
 } from "firebase/auth";
 
+// Utility function to encode email
+const encodeEmail = (email) => email.replace(/\./g, ",");
+
 const SignUpDentistOwner = () => {
   // state variables
   const [personnelAuthStep, setPersonnelAuthStep] = useState(false);
@@ -28,8 +31,8 @@ const SignUpDentistOwner = () => {
   const [gender, setGender] = useState("");
   
   const navigate = useNavigate();
-  // calls the Firebase Authentication service.
   const auth = getAuth(app);
+  const db = getDatabase(app);
 
   // regex pattern for email and password validation
   const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -102,23 +105,25 @@ const SignUpDentistOwner = () => {
       // creates the user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
       const user = userCredential.user;
+
+      // Encode the email to use as the UID
+      const encodedEmail = encodeEmail(email);
       
       /// saves the user info in the Realtime Database
-      const db = getDatabase(app);
-      const newDocRef = push(ref(db, "users/Personnel/DentistOwner"));
-      await set(newDocRef, {
+      await set(ref(db, `users/Personnel/DentistOwner/${encodedEmail}`), { 
         uid: user.uid,
-        email,
-        userPassword,
         firstName,
         middleName,
         lastName,
+        userPassword,
         address,
         contactNumber,
         civilStatus,
         birthDate,
         age,
         gender,
+        email,
+        role: "DentistOwner", 
       });
 
       alert("Registration successful for Dentist Owner");
