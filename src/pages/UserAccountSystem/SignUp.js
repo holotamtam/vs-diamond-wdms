@@ -11,9 +11,9 @@ const SignUp = () => {
       <button onClick={() => navigate(-1)}>Back</button>
       
           <h2>Select Role:</h2>
-          <Link to="/SignUpAssociateDentist"><button>Dentist</button></Link>
-          <Link to="/SignUpClinicStaff"><button>Personnel</button></Link>
-          <Link to="/SignUpPatient"><button>Patient</button></Link>
+          <Link to="/sign-up-associatedentist"><button>Dentist</button></Link>
+          <Link to="/sign-up-clinicstaff"><button>Personnel</button></Link>
+          <Link to="/sign-up-patient"><button>Patient</button></Link>
     </div>
   );
 };

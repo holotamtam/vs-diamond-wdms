@@ -75,9 +75,9 @@ const SignIn = () => {
         // Navigate to the appropriate dashboard
         let dashboardRoute =
           userType === "Patient"
-            ? "/DashboardPatient"
+            ? "/dashboard-patient"
             : userType === "Dentist Owner"
-            ? "/DashboardDentistOwner"
+            ? "/dashboard-dentistowner"
             : userType === "Associate Dentist"
             ? "/DashboardAssociateDentist"
             : userType === "Clinic Staff"

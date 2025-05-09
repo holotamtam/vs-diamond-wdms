@@ -238,7 +238,7 @@ const ManageAppointment = () => {
 
   const handleGoBack = () => {
     if (userRole === "DentistOwner") {
-      navigate("/DashboardDentistOwner");
+      navigate("/dashboard-dentistowner");
     } else if (userRole === "AssociateDentist") {
       navigate("/DashboardAssociateDentist");
     } else if (userRole === "ClinicStaff") {

@@ -68,7 +68,7 @@ const ReportRevenue = () => {
   };
 
   const handleGoBack = () => {
-    navigate("/DashboardDentistOwner"); // Adjust the route as needed
+    navigate("/dashboard-dentistowner");
   };
 
   return (

@@ -71,15 +71,15 @@ function App() {
           {/* User Account System Pages */}
           <Route path="/sign-in" element={<SignIn />} /> {/* READ */}
           <Route path="/sign-up" element={<SignUp/>} /> {/* WRITE */}
-          <Route path="SignUpPatient" element={<SignUpPatient />} /> {/* WRITE */}
-          <Route path="SignUpDentistOwner" element={<SignUpDentistOwner />} /> {/* WRITE */}
-          <Route path="SignUpAssociateDentist" element={<SignUpAssociateDentist />} /> {/* WRITE */}
-          <Route path="SignUpClinicStaff" element={<SignUpClinicStaff />} /> {/* WRITE */}
-          <Route path="ManagePersonnel" element={<ManagePersonnel />} /> {/* READ, WRITE or UPDATE */}
+          <Route path="/sign-up-patient" element={<SignUpPatient />} /> {/* WRITE */}
+          <Route path="/sign-up-dentistowner" element={<SignUpDentistOwner />} /> {/* WRITE */}
+          <Route path="/sign-up-associatedentist" element={<SignUpAssociateDentist />} /> {/* WRITE */}
+          <Route path="/sign-up-clinicstaff" element={<SignUpClinicStaff />} /> {/* WRITE */}
+          <Route path="/manage-personnel" element={<ManagePersonnel />} /> {/* READ, WRITE or UPDATE */}
 
           {/* User Dashboards */}
-          <Route path="DashboardPatient" element={<DashboardPatient />} />
-          <Route path="DashboardDentistOwner" element={<DashboardDentistOwner />} />
+          <Route path="/dashboard-patient" element={<DashboardPatient />} />
+          <Route path="/dashboard-dentistowner" element={<DashboardDentistOwner />} />
           <Route path="DashboardAssociateDentist" element={<DashboardAssociateDentist />} />
           <Route path="DashboardClinicStaff" element={<DashboardClinicStaff />} />
 

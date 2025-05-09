@@ -145,7 +145,7 @@ const PersonnelPatientRecord = () => {
   // Function to handle going back to the dashboard based on user role
   const handleGoBack = () => {
     if (userRole === "DentistOwner") {
-      navigate("/DashboardDentistOwner");
+      navigate("/dashboard-dentistowner");
     } else if (userRole === "AssociateDentist") {
       navigate("/DashboardAssociateDentist");
     } else if (userRole === "ClinicStaff") {

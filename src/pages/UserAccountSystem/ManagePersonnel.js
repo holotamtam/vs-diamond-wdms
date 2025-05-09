@@ -81,7 +81,7 @@ const ManagePersonnel = () => {
     return (
         <div>
             <button>
-                <a href="/DashboardDentistOwner">Go Back to Dashboard</a>
+                <a href="/dashboard-dentistowner">Go Back to Dashboard</a>
             </button>
 
             <h2>Manage Personnel</h2>

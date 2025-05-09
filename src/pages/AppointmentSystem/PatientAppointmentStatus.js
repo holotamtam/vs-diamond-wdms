@@ -90,7 +90,7 @@ const PatientAppointmentStatus = () => {
   return (
     <div>
       <button>
-        <a href="/DashboardPatient">Go Back to Dashboard</a>
+        <a href="/dashboard-patient">Go Back to Dashboard</a>
       </button>
       <h1>Your Appointments</h1>
       {appointments.length > 0 ? (
