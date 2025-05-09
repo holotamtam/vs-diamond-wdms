@@ -79,9 +79,9 @@ const SignIn = () => {
             : userType === "Dentist Owner"
             ? "/dashboard-dentistowner"
             : userType === "Associate Dentist"
-            ? "/DashboardAssociateDentist"
+            ? "/dashboard-associatedentist"
             : userType === "Clinic Staff"
-            ? "/DashboardClinicStaff"
+            ? "/dashboard-clinicstaff"
             : "/"; // Default route in case of unexpected error
 
         navigate(dashboardRoute, { state: { userRole: userType } }); // Pass userRole via navigation state

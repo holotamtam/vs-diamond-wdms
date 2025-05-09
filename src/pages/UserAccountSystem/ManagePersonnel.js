@@ -87,9 +87,9 @@ const ManagePersonnel = () => {
             <h2>Manage Personnel</h2>
 
             <div>
-                <Link to="/SignUpClinicStaff"><button>Add Clinic Staff</button></Link>
-                <Link to="/SignUpDentistOwner"><button>Add Dentist Owner</button></Link>
-                <Link to="/SignUpAssociateDentist"><button>Add Associate Dentist</button></Link>
+                <Link to="/sign-up-clinicstaff"><button>Add Clinic Staff</button></Link>
+                <Link to="/sign-up-dentistowner"><button>Add Dentist Owner</button></Link>
+                <Link to="/sign-up-associatedentist"><button>Add Associate Dentist</button></Link>
             </div>
 
             <h3>Clinic Staff</h3>

@@ -80,17 +80,17 @@ function App() {
           {/* User Dashboards */}
           <Route path="/dashboard-patient" element={<DashboardPatient />} />
           <Route path="/dashboard-dentistowner" element={<DashboardDentistOwner />} />
-          <Route path="DashboardAssociateDentist" element={<DashboardAssociateDentist />} />
-          <Route path="DashboardClinicStaff" element={<DashboardClinicStaff />} />
+          <Route path="/dashboard-associatedentist" element={<DashboardAssociateDentist />} />
+          <Route path="/dashboard-clinicstaff" element={<DashboardClinicStaff />} />
 
           {/* Appointment System */}
-          <Route path="PatientAppointmentBooking" element={<PatientAppointmentBooking />} /> {/* READ or WRITE */}
+          <Route path="/patient-appointment-booking" element={<PatientAppointmentBooking />} /> {/* READ or WRITE */}
           <Route path="PatientAppointmentStatus" element={<PatientAppointmentStatus />} /> {/* READ or WRITE */}
-          <Route path="ManageAppointment" element={<ManageAppointment />} /> {/* READ, WRITE or UPDATE */}
+          <Route path="/manage-appointment" element={<ManageAppointment />} /> {/* READ, WRITE or UPDATE */}
           <Route path="Notifications" element={<Notification />} /> {/* READ or WRITE */}
 
           {/* Patient Record System */}
-          <Route path="PatientRecord" element={<PatientRecord />} /> {/* READ, WRITE or UPDATE */}
+          <Route path="treatment-history" element={<PatientRecord />} /> {/* READ, WRITE or UPDATE */}
           <Route path="PersonnelPatientRecord" element={<PersonnelPatientRecord />} /> {/* READ, WRITE or UPDATE */}
 
           {/* Inventory System */}

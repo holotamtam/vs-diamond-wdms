@@ -116,7 +116,7 @@ const SignUpAssociateDentist = () => {
       });
 
       alert("Registration successful for Associate Dentist");
-      navigate("/DashboardAssociateDentist");
+      navigate("/dashboard-associatedentist");
     } catch (error) {
       // If the email already in use, alert and exit.
       if (error.code === "auth/email-already-in-use") {

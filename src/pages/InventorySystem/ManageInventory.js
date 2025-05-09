@@ -82,9 +82,9 @@ const ManageInventory = () => {
     if (userRole === "DentistOwner") {
       navigate("/dashboard-dentistowner",);
     }else if (userRole === "AssociateDentist") {
-      navigate("/DashboardAssociateDentist",);
+      navigate("/dashboard-associatedentist",);
     }else if (userRole === "ClinicStaff") {
-      navigate("/DashboardClinicStaff",);
+      navigate("/dashboard-clinicstaff",);
     }else {
       alert("Unable to determine your role. Redirecting to the home page.");
       navigate("/"); // Default to home if role is not determined

@@ -127,7 +127,7 @@ const SignUpDentistOwner = () => {
       });
 
       alert("Registration successful for Dentist Owner");
-      navigate("/DashboardDentistOwner");
+      navigate("/dashboard-dentistowner");
     } catch (error) {
       // If the email already in use, alert and exit.
       if (error.code === "auth/email-already-in-use") {

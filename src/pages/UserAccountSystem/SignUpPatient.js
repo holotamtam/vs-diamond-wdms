@@ -114,7 +114,7 @@ const SignUpPatient = () => {
       });
 
       alert("Registration successful for Patient");
-      navigate("/DashboardPatient");
+      navigate("/dashboard-patient");
     } catch (error) {
       // Handle errors
       if (error.code === "auth/email-already-in-use") {

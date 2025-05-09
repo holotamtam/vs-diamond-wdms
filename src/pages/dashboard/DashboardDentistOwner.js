@@ -31,7 +31,7 @@ const DashboardDentistOwner = () => {
           <h2>Dashboard</h2>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ marginBottom: '10px' }}>
-            <Link to="/ManageAppointment" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+            <Link to="/manage-appointment" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
                 Manage Appointment
             </Link>
             </li>
