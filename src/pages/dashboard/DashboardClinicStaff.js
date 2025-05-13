@@ -31,7 +31,7 @@ const DashboardClinicStaff = () => {
           <h2>Dashboard</h2>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ marginBottom: '10px' }}>
-            <Link to="/ManageAppointment" state={{ userRole: "ClinicStaff" }} style={{ textDecoration: 'none', color: '#333' }}>
+            <Link to="/manage-appointment" state={{ userRole: "ClinicStaff" }} style={{ textDecoration: 'none', color: '#333' }}>
              Manage Appointment
             </Link>
             </li>
@@ -41,7 +41,7 @@ const DashboardClinicStaff = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/ManageInventory" state={{ userRole: "ClinicStaff" }} style={{ textDecoration: 'none', color: '#333' }} >
+              <Link to="/inventory" state={{ userRole: "ClinicStaff" }} style={{ textDecoration: 'none', color: '#333' }} >
                 Inventory
               </Link>
             </li>

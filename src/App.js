@@ -85,16 +85,16 @@ function App() {
 
           {/* Appointment System */}
           <Route path="/patient-appointment-booking" element={<PatientAppointmentBooking />} /> {/* READ or WRITE */}
-          <Route path="PatientAppointmentStatus" element={<PatientAppointmentStatus />} /> {/* READ or WRITE */}
+          <Route path="/patient-appointment-status" element={<PatientAppointmentStatus />} /> {/* READ or WRITE */}
           <Route path="/manage-appointment" element={<ManageAppointment />} /> {/* READ, WRITE or UPDATE */}
-          <Route path="Notifications" element={<Notification />} /> {/* READ or WRITE */}
+          <Route path="/notifications" element={<Notification />} /> {/* READ or WRITE */}
 
           {/* Patient Record System */}
-          <Route path="treatment-history" element={<PatientRecord />} /> {/* READ, WRITE or UPDATE */}
+          <Route path="/treatment-history" element={<PatientRecord />} /> {/* READ, WRITE or UPDATE */}
           <Route path="PersonnelPatientRecord" element={<PersonnelPatientRecord />} /> {/* READ, WRITE or UPDATE */}
 
           {/* Inventory System */}
-          <Route path="ManageInventory" element={<ManageInventory />} /> {/* WRITE or UPDATE */}
+          <Route path="/inventory" element={<ManageInventory />} /> {/* WRITE or UPDATE */}
 
           {/* Accounting System */}
           <Route path="ReportRevenue" element={<ReportRevenue />} /> {/* WRITE or UPDATE */}

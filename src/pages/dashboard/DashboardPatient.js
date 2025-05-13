@@ -329,7 +329,7 @@ const DashboardPatient = () => {
       ))}
     </ul>
     <div style={{ textAlign: "center", padding: "10px", borderTop: "1px solid #ddd" }}>
-      <Link to="/Notifications" style={{ textDecoration: "none", color: "#007BFF" }}>
+      <Link to="/notifications" style={{ textDecoration: "none", color: "#007BFF" }}>
         View Notifications
       </Link>
     </div>
