@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../backend/firebaseConfig";
 import { ref, onValue } from "firebase/database";
+import { getAuth, signOut } from "firebase/auth";
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
 import DentalChart from "../../components/DentalChart";

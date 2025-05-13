@@ -111,32 +111,37 @@ const PatientAppointmentBooking = () => {
   };
 
   const generateTimeSlots = () => {
-    const officeStartTime = 9 * 60; // 9:00 AM in minutes
-    const officeEndTime = 17 * 60; // 5:00 PM in minutes
-    const totalDuration = 60; // Fixed duration of 1 hour for all services
-    const slots = [];
+  const officeStartTime = 9 * 60; // 9:00 AM in minutes
+  const officeEndTime = 17 * 60; // 5:00 PM in minutes
+  const totalDuration = 60; // Fixed duration of 1 hour for all services
+  const slots = [];
 
-    for (let start = officeStartTime; start + totalDuration <= officeEndTime; start += 30) {
-      const end = start + totalDuration;
-      const slot = {
-        start,
-        end,
-        display: `${formatTime(start)} - ${formatTime(end)}`,
-      };
+  for (let start = officeStartTime; start + totalDuration <= officeEndTime; start += 30) {
+    const end = start + totalDuration;
+    const slot = {
+      start,
+      end,
+      display: `${formatTime(start)} - ${formatTime(end)}`,
+      isAvailable: true, // Default to available
+    };
 
-      // Check if the slot overlaps any existing appointment
-      const overlaps = appointments.some((appointment) => {
-        const appointmentStart = parseInt(appointment.time.split(":")[0]) * 60 + parseInt(appointment.time.split(":")[1]);
-        const appointmentEnd = appointmentStart + appointment.duration;
-        return start < appointmentEnd && end > appointmentStart;
-      });
+    // Check if the slot overlaps any existing appointment
+    const overlaps = appointments.some((appointment) => {
+      const appointmentStart =
+        parseInt(appointment.time.split(":")[0]) * 60 +
+        parseInt(appointment.time.split(":")[1]);
+      const appointmentEnd = appointmentStart + appointment.duration;
+      return start < appointmentEnd && end > appointmentStart;
+    });
 
-      if (!overlaps) {
-        slots.push(slot);
-      }
+    if (overlaps) {
+      slot.isAvailable = false; // Mark as unavailable
     }
-    return slots;
-  };
+
+    slots.push(slot);
+  }
+  return slots;
+};
 
   const handleAppointmentSubmit = () => {
     if (!selectedDate || selectedServices.length === 0 || !selectedTimeSlot || !selectedDentist) {
@@ -241,36 +246,46 @@ const PatientAppointmentBooking = () => {
 
         <div style={{ flex: 1 }}>
           <h2>Available Time Slots:</h2>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
-            <thead>
-              <tr>
-                <th style={{ border: "1px solid black", padding: "10px" }}>Time Slot</th>
-                <th style={{ border: "1px solid black", padding: "10px" }}>Select</th>
-              </tr>
-            </thead>
-            <tbody>
-              {generateTimeSlots().map((slot, index) => (
-                <tr key={index}>
-                  <td style={{ border: "1px solid black", padding: "10px" }}>{slot.display}</td>
-                  <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
-                    <button
-                      onClick={() => setSelectedTimeSlot(slot)}
-                      style={{
-                        background: selectedTimeSlot === slot ? "#4CAF50" : "#007BFF",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                        borderRadius: "5px",
-                      }}
-                    >
-                      {selectedTimeSlot === slot ? "Selected" : "Select"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+   <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
+  <thead>
+    <tr>
+      <th style={{ border: "1px solid black", padding: "10px" }}>Time Slot</th>
+      <th style={{ border: "1px solid black", padding: "10px" }}>Select</th>
+    </tr>
+  </thead>
+  <tbody>
+    {generateTimeSlots().map((slot, index) => (
+      <tr
+        key={index}
+        style={{
+          background: selectedTimeSlot === slot ? "#e0f7fa" : "transparent", // Highlight selected row
+        }}
+      >
+        <td style={{ border: "1px solid black", padding: "10px" }}>{slot.display}</td>
+        <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
+          <button
+            onClick={() => slot.isAvailable && setSelectedTimeSlot(slot)} // Only allow selection if available
+            disabled={!slot.isAvailable} // Disable button if slot is unavailable
+            style={{
+              background: selectedTimeSlot === slot ? "#4CAF50" : slot.isAvailable ? "#007BFF" : "#ddd", // Gray out unavailable slots
+              color: slot.isAvailable ? "white" : "#888", // Change text color for unavailable slots
+              border: "none",
+              padding: "5px 10px",
+              cursor: slot.isAvailable ? "pointer" : "not-allowed", // Change cursor for unavailable slots
+              borderRadius: "5px",
+            }}
+          >
+            {selectedTimeSlot === slot
+              ? "Selected"
+              : slot.isAvailable
+              ? "Select"
+              : "Unavailable"}
+          </button>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
 
           <button
             onClick={handleAppointmentSubmit}

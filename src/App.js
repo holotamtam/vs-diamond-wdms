@@ -23,7 +23,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Import Other Pages
 import Index from './pages/index/Index';
-import Services from './pages/Services/Services';
+import Services from './pages/otherpages/Services';
+import Settings from './pages/otherpages/Settings';
 
 // Import NoPage or Error Page
 import NoPage from './pages/NoPage/NoPage';
@@ -67,6 +68,7 @@ function App() {
           {/* Other Pages */}
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/settings" element={<Settings />} />
 
           {/* User Account System Pages */}
           <Route path="/sign-in" element={<SignIn />} /> {/* READ */}
@@ -91,13 +93,13 @@ function App() {
 
           {/* Patient Record System */}
           <Route path="/treatment-history" element={<PatientRecord />} /> {/* READ, WRITE or UPDATE */}
-          <Route path="PersonnelPatientRecord" element={<PersonnelPatientRecord />} /> {/* READ, WRITE or UPDATE */}
+          <Route path="/patient-record" element={<PersonnelPatientRecord />} /> {/* READ, WRITE or UPDATE */}
 
           {/* Inventory System */}
           <Route path="/inventory" element={<ManageInventory />} /> {/* WRITE or UPDATE */}
 
           {/* Accounting System */}
-          <Route path="ReportRevenue" element={<ReportRevenue />} /> {/* WRITE or UPDATE */}
+          <Route path="/revenue" element={<ReportRevenue />} /> {/* WRITE or UPDATE */}
 
 
           {/* Error Page */}
