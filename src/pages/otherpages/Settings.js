@@ -58,20 +58,29 @@ const Settings = () => {
   };
 
   // Handle save changes
-  const handleSave = () => {
-    if (currentUser) {
-      const userRef = ref(db, `users/Patient/${currentUser.uid}`);
-      update(userRef, editedDetails)
-        .then(() => {
-          setIsEditing(false); // Exit edit mode
-          alert("Profile updated successfully!");
-        })
-        .catch((error) => {
-          console.error("Error updating profile:", error);
-          alert("Failed to update profile. Please try again.");
-        });
-    }
-  };
+  // Handle save changes
+const handleSave = () => {
+  if (currentUser) {
+    const userRef = ref(db, `users/Patient/${currentUser.uid}`);
+
+    // Merge edited details with existing user details
+    const updatedDetails = {
+      ...userDetails, // Existing user data
+      ...editedDetails, // Only the fields that were edited
+    };
+
+    update(userRef, updatedDetails)
+      .then(() => {
+        setUserDetails(updatedDetails); // Update local state with the new data
+        setIsEditing(false); // Exit edit mode
+        alert("Profile updated successfully!");
+      })
+      .catch((error) => {
+        console.error("Error updating profile:", error);
+        alert("Failed to update profile. Please try again.");
+      });
+  }
+};
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
