@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { db, auth } from "../../backend/firebaseConfig";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, updatePassword } from "firebase/auth";
 import { ref, onValue, update } from "firebase/database";
 
 const Settings = () => {
@@ -516,27 +516,32 @@ const handleSave = () => {
     {/* New Password and Confirm Password */}
     <form
       onSubmit={async (e) => {
-        e.preventDefault();
-        if (newPassword !== confirmPassword) {
-          alert("Passwords do not match!");
-          return;
-        }
-        if (!newPassword) {
-          alert("Password cannot be empty!");
-          return;
-        }
-        if (user) {
-          const userRef = ref(db, `users/Patient/${user.uid}`);
-          try {
-            await update(userRef, { userPassword: newPassword });
-            alert("Password updated successfully!");
-            setNewPassword("");
-            setConfirmPassword("");
-          } catch (error) {
-            alert("Failed to update password.");
-          }
-        }
-      }}
+  e.preventDefault();
+  if (newPassword !== confirmPassword) {
+    alert("Passwords do not match!");
+    return;
+  }
+  if (!newPassword) {
+    alert("Password cannot be empty!");
+    return;
+  }
+  if (user) {
+    try {
+      // Update password in Firebase Authentication
+      await updatePassword(user, newPassword);
+
+      // Optionally update in your database for record-keeping
+      const userRef = ref(db, `users/Patient/${user.uid}`);
+      await update(userRef, { userPassword: newPassword });
+
+      alert("Password updated successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      alert("Failed to update password. " + error.message);
+    }
+  }
+}}
       style={{ maxWidth: 400, margin: "0 0 0 0" }}
     >
       <div style={{ marginBottom: "15px", textAlign: "left" }}>

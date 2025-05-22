@@ -170,26 +170,27 @@ const ManageAppointment = () => {
   
         // Check if the status has changed
         if (originalAppointment && originalAppointment.status !== formData.status) {
-          let message = "";
-          if (formData.status === "Confirmed") {
-            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
-          } else if (formData.status === "Completed") {
-            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
-          } else if (formData.status === "Pending") {
-            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
-          }
-  
-          // Add a notification for the patient
-          if (message) {
-            addNotification(originalAppointment.userId, message);
-          }
-        }
-  
-        // Check if the dentist remarks have changed
-        if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
-          const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
-          addNotification(originalAppointment.userId, remarksMessage);
-        }
+  let message = "";
+  if (formData.status === "Confirmed") {
+    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
+  } else if (formData.status === "Completed") {
+    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
+  } else if (formData.status === "Pending") {
+    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
+  }
+
+  // Use uid for notification
+  if (message && originalAppointment.uid) {
+    addNotification(originalAppointment.uid, message);
+  }
+}
+
+if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
+  const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
+  if (originalAppointment.uid) {
+    addNotification(originalAppointment.uid, remarksMessage);
+  }
+}
   
         // Update the local state
         setAppointments((prevAppointments) =>
