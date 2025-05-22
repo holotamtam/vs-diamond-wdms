@@ -18,6 +18,7 @@ const DashboardPatient = () => {
   const [treatmentHistory, setTreatmentHistory] = useState([]);
   const [nextAppointment, setNextAppointment] = useState(null);
   const [latestAppointments, setLatestAppointments] = useState([]);
+  const [userDetails, setUserDetails] = useState(null);
 
 
 
@@ -48,6 +49,24 @@ const DashboardPatient = () => {
 
     return () => unsubscribe();
   }, []);
+
+  // Fetch user details for sidebar profile
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // Fetch user details from your database
+      const usersRef = ref(db, "users/Patient");
+      onValue(usersRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const users = snapshot.val();
+          const userData = Object.values(users).find((u) => u.uid === user.uid);
+          if (userData) setUserDetails(userData);
+        }
+      });
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
   // Function to fetch completed appointments (treatment history)
   const fetchCompletedAppointments = (email) => {
@@ -190,7 +209,7 @@ const DashboardPatient = () => {
   return (
   <div style={{ display: "flex", height: "100vh" }}>
     {/* Sidebar */}
-    <div
+     <div
       style={{
         width: "250px",
         background: "#f4f4f4",
@@ -227,19 +246,47 @@ const DashboardPatient = () => {
           </li>
         </ul>
       </div>
-      <button
-        onClick={handleLogout}
-        style={{
-          background: "#f44336",
-          color: "white",
-          border: "none",
-          padding: "10px",
-          cursor: "pointer",
-          borderRadius: "5px",
-        }}
-      >
-        Sign Out
-      </button>
+      {/* Move user profile section above the sign out button */}
+      <div>
+        {userDetails && (
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
+            <img
+              src={userDetails.profilePictureUrl || "https://via.placeholder.com/50"}
+              alt="Profile"
+              style={{
+                width: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "2px solid #ddd",
+                marginRight: "10px",
+              }}
+            />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <span style={{ fontWeight: "bold", fontSize: "15px", textAlign: "left" }}>
+                {userDetails.firstName} {userDetails.middleName} {userDetails.lastName}
+              </span>
+              <span style={{ fontSize: "13px", color: "#555", textAlign: "left" }}>
+                {userDetails.email}
+              </span>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={handleLogout}
+          style={{
+            background: "#f44336",
+            color: "white",
+            border: "none",
+            padding: "10px",
+            cursor: "pointer",
+            borderRadius: "5px",
+            width: "100%",
+          }}
+        >
+          Sign Out
+        </button>
+      </div>
     </div>
 
     {/* Main Content */}

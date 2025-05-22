@@ -100,55 +100,70 @@ const PatientRecord = () => {
   return (
     <div style={{ display: "flex", height: "100vh" }}>
       {/* Sidebar */}
-      <div
-        style={{
-          width: "250px",
-          background: "#f4f4f4",
-          padding: "20px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          borderRight: "1px solid #ddd",
-        }}
-      >
-        <div>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            <li style={{ marginBottom: "20px" }}>
-              <Link
-                to="/dashboard-patient"
-                style={{
-                  textDecoration: "none",
-                  color: "#333",
-                }}
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li style={{ marginBottom: "20px" }}>
-              <Link
-                to="/treatment-history"
-                style={{
-                  textDecoration: "none",
+       <div
+      style={{
+        width: "250px",
+        background: "#f4f4f4",
+        padding: "20px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        borderRight: "1px solid #ddd",
+      }}
+    >
+      <div>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          <li style={{ marginBottom: "20px" }}>
+            <Link
+              to="/dashboard-patient"
+              style={{
+                textDecoration: "none",
+                color: "#333",
+              }}
+            >
+              Dashboard
+            </Link>
+          </li>
+          <li style={{ marginBottom: "20px" }}>
+            <Link to="/treatment-history" style={{ textDecoration: "none",
                   color: "#007BFF", // Highlight the active link
-                  fontWeight: "bold",
-                }}
-              >
-                Treatment History
-              </Link>
-            </li>
-            <li style={{ marginBottom: "20px" }}>
-              <Link
-                to="/settings"
-                style={{
-                  textDecoration: "none",
-                  color: "#333",
-                }}
-              >
-                Settings
-              </Link>
-            </li>
-          </ul>
-        </div>
+                  fontWeight: "bold", }}>
+              Treatment History
+            </Link>
+          </li>
+          <li style={{ marginBottom: "20px" }}>
+            <Link to="/settings" style={{ textDecoration: "none", color: "#333" }}>
+              Settings
+            </Link>
+          </li>
+        </ul>
+      </div>
+      {/* Move user profile section above the sign out button */}
+      <div>
+        {userDetails && (
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
+            <img
+              src={userDetails.profilePictureUrl || "https://via.placeholder.com/50"}
+              alt="Profile"
+              style={{
+                width: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "2px solid #ddd",
+                marginRight: "10px",
+              }}
+            />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <span style={{ fontWeight: "bold", fontSize: "15px", textAlign: "left" }}>
+                {userDetails.firstName} {userDetails.middleName} {userDetails.lastName}
+              </span>
+              <span style={{ fontSize: "13px", color: "#555", textAlign: "left" }}>
+                {userDetails.email}
+              </span>
+            </div>
+          </div>
+        )}
         <button
           onClick={handleLogout}
           style={{
@@ -158,11 +173,13 @@ const PatientRecord = () => {
             padding: "10px",
             cursor: "pointer",
             borderRadius: "5px",
+            width: "100%",
           }}
         >
           Sign Out
         </button>
       </div>
+    </div>
 
       {/* Main Content */}
       <div style={{ flex: 1, padding: "20px" }}>
