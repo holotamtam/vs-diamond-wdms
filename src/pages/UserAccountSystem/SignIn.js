@@ -27,6 +27,13 @@ const SignIn = () => {
       console.log("Sign in successful, userCredential:", userCredential);
       const user = userCredential.user;
 
+      // Check if the email is verified
+      //if (!user.emailVerified) {
+        //alert("Please verify your email before signing in. Check your inbox for the verification email.");
+        //await auth.signOut();
+        //return;
+      //}
+
       // Determine the user type from the Realtime Database using the user's UID
       const db = getDatabase(app);
       const patientRef = ref(db, `users/Patient/${user.uid}`);

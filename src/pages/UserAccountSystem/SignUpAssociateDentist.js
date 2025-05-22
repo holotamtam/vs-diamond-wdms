@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import app from "../../backend/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { getDatabase, ref, set, push } from "firebase/database";
@@ -6,6 +6,7 @@ import SignUpForm from "../../components/SignUpForm";
 import { 
   getAuth, 
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   fetchSignInMethodsForEmail, 
 } from "firebase/auth";
 
@@ -23,6 +24,8 @@ const SignUpAssociateDentist = () => {
   const [birthDate, setBirthDate] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   
   const navigate = useNavigate();
   const db = getDatabase(app);
@@ -91,8 +94,14 @@ const SignUpAssociateDentist = () => {
       // creates the user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
       const user = userCredential.user;
+
+      // sends email verification
+      await sendEmailVerification(user);
+      alert("A verification email has been sent. Please check your inbox.");
+      setShowVerifyModal(true);
       
-       // saves the user info in the Realtime Database
+      
+      // saves the user info in the Realtime Database
       await set(ref(db, `users/Personnel/AssociateDentist/${user.uid}`), {
         uid: user.uid,
         email,
@@ -109,8 +118,6 @@ const SignUpAssociateDentist = () => {
         role: "AssociateDentist",
       });
 
-      alert("Registration successful for Associate Dentist");
-      navigate("/dashboard-associatedentist");
     } catch (error) {
       // If the email already in use, alert and exit.
       if (error.code === "auth/email-already-in-use") {
@@ -119,6 +126,24 @@ const SignUpAssociateDentist = () => {
       }
     }
   };
+
+  // Poll for verification status
+  useEffect(() => {
+    let interval;
+    if (showVerifyModal) {
+      interval = setInterval(async () => {
+        await auth.currentUser.reload();
+        if (auth.currentUser.emailVerified) {
+          setIsVerified(true);
+          clearInterval(interval);
+          setTimeout(() => {
+            navigate("/dashboard-associatedentist");
+          }, 1500); // Give user a moment to see the "verified" message
+        }
+      }, 2000); // check every 2 seconds
+    }
+    return () => clearInterval(interval);
+  }, [showVerifyModal, auth, navigate]);
 
   return (
     <div>
@@ -152,6 +177,49 @@ const SignUpAssociateDentist = () => {
           setUserConfirmPassword={setUserConfirmPassword}
           handleSubmit={handleSubmit}
         />
+
+        {showVerifyModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: "2rem",
+              borderRadius: "8px",
+              textAlign: "center",
+              minWidth: "300px",
+            }}
+          >
+            {!isVerified ? (
+              <>
+                <h2>Verify Your Email</h2>
+                <p>
+                  A verification email has been sent to <b>{email}</b>.<br />
+                  Please check your inbox and click the verification link.
+                </p>
+                <p>Waiting for verification...</p>
+              </>
+            ) : (
+              <>
+                <h2>Email Verified!</h2>
+                <p>Redirecting to your dashboard...</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
