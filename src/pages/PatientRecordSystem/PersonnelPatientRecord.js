@@ -47,7 +47,7 @@ const PersonnelPatientRecord = () => {
         let allAppointmentsList = [];
         Object.entries(allAppointments).forEach(([date, dateAppointments]) => {
           Object.entries(dateAppointments).forEach(([id, appointment]) => {
-            allAppointmentsList.push({ id, ...appointment });
+            allAppointmentsList.push({ id, date, ...appointment });
           });
         });
         setAppointments(allAppointmentsList);
@@ -62,18 +62,18 @@ const PersonnelPatientRecord = () => {
       if (snapshot.exists()) {
         const allUsers = snapshot.val();
         let patientList = [];
-        Object.entries(allUsers).forEach(([id, user]) => {
+        Object.entries(allUsers).forEach(([uid, user]) => {
           patientList.push({
             email: user.email,
             firstName: user.firstName,
             middleName: user.middleName,
             lastName: user.lastName,
-            birthday: user.birthday,
+            birthDate: user.birthday,
             age: user.age,
             address: user.address,
             civilStatus: user.civilStatus,
             occupation: user.occupation,
-            uid: id,
+            uid: uid,
           });
         });
         setPatients(patientList);
@@ -89,7 +89,7 @@ const PersonnelPatientRecord = () => {
     setSelectedPatientName({ firstName: patient.firstName, middleName: patient.middleName, lastName: patient.lastName });
     setSelectedPatientInfo(patient);
     const patientAppointments = appointments.filter(
-      (appointment) => appointment.userId === email && appointment.status === "Completed"
+      (appointment) => appointment.uid === patient.uid && appointment.status === "Completed"
     );
     setPatientRecords(patientAppointments);
     setActiveTab("personal"); // Reset tab when selecting a new patient
@@ -101,7 +101,7 @@ const PersonnelPatientRecord = () => {
     setSearchTerm(term);
     const filtered = patients.filter((patient) => {
       const patientAppointments = appointments.filter(
-        (appointment) => appointment.userId === patient.email && appointment.status === "Completed"
+        (appointment) => appointment.uid === patient.uid && appointment.status === "Completed"
       );
       return (
         patient.email.toLowerCase().includes(term) ||

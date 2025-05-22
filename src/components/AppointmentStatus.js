@@ -32,7 +32,7 @@ const AppointmentStatus = () => {
         Object.entries(data).forEach(([date, appointmentsOnDate]) => {
           Object.entries(appointmentsOnDate).forEach(([id, appointment]) => {
             if (
-              appointment.userId === currentUser.email &&
+              appointment.uid === currentUser.uid &&
               (appointment.status === "Pending" || appointment.status === "Confirmed")
             ) {
               userAppointments.push({ id, date, ...appointment });

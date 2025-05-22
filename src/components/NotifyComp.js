@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../backend/firebaseConfig";
+import { db, auth } from "../backend/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
 import { ref, onValue, remove, update } from "firebase/database";
-
-// Utility function to encode email
-export const encodeEmail = (email) => email.replace(/\./g, ",");
 
 // Fetch notifications
 export const fetchNotifications = (currentUser, callback) => {
   if (currentUser) {
-    const encodedEmail = encodeEmail(currentUser.email);
-    const notificationsRef = ref(db, `notifications/${encodedEmail}`);
+    const notificationsRef = ref(db, `notifications/${currentUser.uid}`);
     onValue(notificationsRef, (snapshot) => {
       const data = snapshot.val();
       const fetchedNotifications = data
@@ -23,8 +20,8 @@ export const fetchNotifications = (currentUser, callback) => {
 // Mark notification as read
 export const markNotificationAsRead = async (currentUser, notificationId) => {
   if (currentUser) {
-    const encodedEmail = encodeEmail(currentUser.email);
-    const notificationRef = ref(db, `notifications/${encodedEmail}/${notificationId}`);
+    //const encodedEmail = encodeEmail(currentUser.email);
+    const notificationRef = ref(db, `notifications/${currentUser.uid}/${notificationId}`);
     try {
       await update(notificationRef, { read: true });
       console.log(`Notification ${notificationId} marked as read.`);
@@ -37,8 +34,8 @@ export const markNotificationAsRead = async (currentUser, notificationId) => {
 // Delete notification
 export const deleteNotification = async (currentUser, notificationId, callback) => {
   if (currentUser) {
-    const encodedEmail = encodeEmail(currentUser.email);
-    const notificationRef = ref(db, `notifications/${encodedEmail}/${notificationId}`);
+    //const encodedEmail = encodeEmail(currentUser.email);
+    const notificationRef = ref(db, `notifications/${currentUser.uid}/${notificationId}`);
     try {
       await remove(notificationRef);
       callback((prev) => prev.filter((notif) => notif.id !== notificationId));

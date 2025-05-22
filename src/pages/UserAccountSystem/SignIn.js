@@ -29,10 +29,13 @@ const SignIn = () => {
 
       // Determine the user type from the Realtime Database using the user's UID
       const db = getDatabase(app);
-      const patientRef = ref(db, "users/Patient");
-      const dentistOwnerRef = ref(db, "users/Personnel/DentistOwner");
-      const associateDentistRef = ref(db, "users/Personnel/AssociateDentist");
-      const clinicStaffRef = ref(db, "users/Personnel/ClinicStaff");
+      const patientRef = ref(db, `users/Patient/${user.uid}`);
+      const dentistOwnerRef = ref(db, `users/Personnel/DentistOwner/${user.uid}`);
+      const associateDentistRef = ref(db, `users/Personnel/AssociateDentist/${user.uid}`);
+      const clinicStaffRef = ref(db, `users/Personnel/ClinicStaff/${user.uid}`);
+
+      console.log("Authenticated UID:", user.uid);
+      console.log("DB Path:", `users/Patient/${user.uid}`);
 
       const [patientSnap, dentistOwnerSnap, associateDentistSnap, clinicStaffSnap] = await Promise.all([
         get(patientRef),
@@ -42,30 +45,15 @@ const SignIn = () => {
       ]);
 
       let userType = ""; // Temporary variable to determine the user type
-
+     
       if (patientSnap.exists()) {
-        const patients = Object.values(patientSnap.val());
-        if (patients.find((record) => record.uid === user.uid)) {
-          userType = "Patient";
-        }
-      }
-      if (!userType && dentistOwnerSnap.exists()) {
-        const dentistsOwner = Object.values(dentistOwnerSnap.val());
-        if (dentistsOwner.find((record) => record.uid === user.uid)) {
-          userType = "Dentist Owner";
-        }
-      }
-      if (!userType && associateDentistSnap.exists()) {
-        const associateDentist = Object.values(associateDentistSnap.val());
-        if (associateDentist.find((record) => record.uid === user.uid)) {
-          userType = "Associate Dentist";
-        }
-      }
-      if (!userType && clinicStaffSnap.exists()) {
-        const clinicStaffs = Object.values(clinicStaffSnap.val());
-        if (clinicStaffs.find((record) => record.uid === user.uid)) {
-          userType = "Clinic Staff";
-        }
+        userType = "Patient";
+      } else if (dentistOwnerSnap.exists()) {
+        userType = "DentistOwner";
+      } else if (associateDentistSnap.exists()) {
+        userType = "AssociateDentist";
+      } else if (clinicStaffSnap.exists()) {  
+        userType = "ClinicStaff";
       }
 
       if (userType) {
@@ -76,11 +64,11 @@ const SignIn = () => {
         let dashboardRoute =
           userType === "Patient"
             ? "/dashboard-patient"
-            : userType === "Dentist Owner"
+            : userType === "DentistOwner"
             ? "/dashboard-dentistowner"
-            : userType === "Associate Dentist"
+            : userType === "AssociateDentist"
             ? "/dashboard-associatedentist"
-            : userType === "Clinic Staff"
+            : userType === "ClinicStaff"
             ? "/dashboard-clinicstaff"
             : "/"; // Default route in case of unexpected error
 

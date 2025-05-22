@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../backend/firebaseConfig";
@@ -6,7 +6,7 @@ import { ref, onValue } from "firebase/database";
 import {
   markNotificationAsRead,
   deleteNotification,
-  encodeEmail,
+  //encodeEmail,
 } from "../../components/NotifyComp";
 
 const DashboardPatient = () => {
@@ -25,10 +25,10 @@ const DashboardPatient = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const encodedEmail = encodeEmail(user.email);
+        //const encodedEmail = encodeEmail(user.email);
 
         // Fetch notifications
-        const notificationsRef = ref(db, `notifications/${encodedEmail}`);
+        const notificationsRef = ref(db, `notifications/${user.uid}`);
         onValue(notificationsRef, (snapshot) => {
           const data = snapshot.val();
           const fetchedNotifications = data
@@ -39,8 +39,8 @@ const DashboardPatient = () => {
         });
 
         // Fetch treatment history and next appointment
-        fetchCompletedAppointments(user.email);
-        fetchNextAppointment(user.email);
+        fetchCompletedAppointments(user.uid);
+        fetchNextAppointment(user.uid);
       } else {
         setLoading(false);
       }
@@ -50,7 +50,7 @@ const DashboardPatient = () => {
   }, []);
 
   // Function to fetch completed appointments (treatment history)
-  const fetchCompletedAppointments = (email) => {
+  const fetchCompletedAppointments = (uid) => {
     const appointmentsRef = ref(db, "appointments");
 
     onValue(appointmentsRef, (snapshot) => {
@@ -61,7 +61,7 @@ const DashboardPatient = () => {
         // Iterate through all appointments and filter completed ones
         Object.entries(allAppointments).forEach(([date, dateAppointments]) => {
           Object.entries(dateAppointments).forEach(([id, appointment]) => {
-            if (appointment.userId === email && appointment.status === "Completed") {
+            if (appointment.uid === uid && appointment.status === "Completed") {
               completedAppointments.push({ id, ...appointment });
             }
           });
@@ -77,7 +77,7 @@ const DashboardPatient = () => {
   };
 
   // Function to fetch the next appointment
-  const fetchNextAppointment = (email) => {
+  const fetchNextAppointment = (uid) => {
     const appointmentsRef = ref(db, "appointments");
 
     onValue(appointmentsRef, (snapshot) => {
@@ -89,7 +89,7 @@ const DashboardPatient = () => {
         Object.entries(allAppointments).forEach(([date, dateAppointments]) => {
           Object.entries(dateAppointments).forEach(([id, appointment]) => {
             if (
-              appointment.userId === email &&
+              appointment.uid === uid &&
               (appointment.status === "Pending" || appointment.status === "Approved")
             ) {
               upcomingAppointments.push({ id, ...appointment });
@@ -110,14 +110,14 @@ const DashboardPatient = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        fetchLatestAppointments(user.email);
+        fetchLatestAppointments(user.uid);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  const fetchLatestAppointments = (email) => {
+  const fetchLatestAppointments = (uid) => {
     const appointmentsRef = ref(db, "appointments");
 
     onValue(appointmentsRef, (snapshot) => {
@@ -129,7 +129,7 @@ const DashboardPatient = () => {
         Object.entries(allAppointments).forEach(([date, dateAppointments]) => {
           Object.entries(dateAppointments).forEach(([id, appointment]) => {
             if (
-              appointment.userId === email &&
+              appointment.uid === uid &&
               (appointment.status === "Pending" || appointment.status === "Approved")
             ) {
               upcomingAppointments.push({ id, ...appointment });

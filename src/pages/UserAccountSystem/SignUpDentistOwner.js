@@ -9,9 +9,6 @@ import {
   fetchSignInMethodsForEmail, 
 } from "firebase/auth";
 
-// Utility function to encode email
-const encodeEmail = (email) => email.replace(/\./g, ",");
-
 const SignUpDentistOwner = () => {
   // state variables
   const [personnelAuthStep, setPersonnelAuthStep] = useState(false);
@@ -106,11 +103,8 @@ const SignUpDentistOwner = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
       const user = userCredential.user;
 
-      // Encode the email to use as the UID
-      const encodedEmail = encodeEmail(email);
-      
       /// saves the user info in the Realtime Database
-      await set(ref(db, `users/Personnel/DentistOwner/${encodedEmail}`), { 
+      await set(ref(db, `users/Personnel/DentistOwner/${user.uid}`), { 
         uid: user.uid,
         firstName,
         middleName,
