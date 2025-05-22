@@ -7,24 +7,26 @@ import { ref, onValue, update } from "firebase/database";
 const Settings = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Profile"); // Default to "Profile"
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setCurrentUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const [isEditing, setIsEditing] = useState(false); // State to toggle edit mode
   const [editedDetails, setEditedDetails] = useState({}); // State to store edited values
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+
 
   // Fetch user details from the database
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user.uid);
-        fetchUserDetails(user.uid); // Fetch user details from the database
-      } else {
-        setCurrentUser(null);
-        setUserDetails(null);
-      }
-    });
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setCurrentUser(user); // <-- store the whole user object
+      fetchUserDetails(user.uid); // Fetch user details from the database
+    } else {
+      setCurrentUser(null);
+      setUserDetails(null);
+    }
+  });
 
     return () => unsubscribe();
   }, []);
@@ -59,8 +61,8 @@ const Settings = () => {
   };
   // Handle save changes
 const handleSave = () => {
-  if (currentUser) {
-    const userRef = ref(db, `users/Patient/${currentUser}`);
+  if (user) {
+    const userRef = ref(db, `users/Patient/${user.uid}`);
 
     // Merge edited details with existing user details
     const updatedDetails = {
@@ -337,25 +339,45 @@ const handleSave = () => {
       }}
     >
       <div>
-        <label style={{ marginBottom: "5px", display: "block", textAlign: "left" }}>
-          <strong>Civil Status:</strong>
-        </label>
-        <input
-          type="text"
-          defaultValue={userDetails.civilStatus || "N/A"}
-          disabled={!isEditing} // Disable input if not editing
-          onChange={(e) => handleInputChange("civilStatus", e.target.value)}
-          style={{
-            width: "100%", // Match column width
-            height: "35px", // Consistent height
-            padding: "5px",
-            border: "1px solid #ddd",
-            borderRadius: "5px",
-            background: isEditing ? "white" : "#f4f4f4",
-            fontSize: "14px", // Consistent font size
-          }}
-        />
-      </div>
+  <label style={{ marginBottom: "5px", display: "block", textAlign: "left" }}>
+    <strong>Civil Status:</strong>
+  </label>
+  {isEditing ? (
+    <select
+      defaultValue={userDetails.civilStatus || "Single"}
+      onChange={(e) => handleInputChange("civilStatus", e.target.value)}
+      style={{
+        width: "100%",
+        height: "45px",
+        padding: "5px",
+        border: "1px solid #ddd",
+        borderRadius: "5px",
+        background: "white",
+        fontSize: "14px",
+      }}
+    >
+      <option value="Single">Single</option>
+      <option value="Married">Married</option>
+      <option value="Widowed">Widowed</option>
+      <option value="Divorced">Divorced</option>
+    </select>
+  ) : (
+    <input
+      type="text"
+      value={userDetails.civilStatus || "N/A"}
+      disabled
+      style={{
+        width: "100%",
+        height: "35px",
+        padding: "5px",
+        border: "1px solid #ddd",
+        borderRadius: "5px",
+        background: "#f4f4f4",
+        fontSize: "14px",
+      }}
+    />
+  )}
+</div>
       <div>
         <label style={{ marginBottom: "5px", display: "block", textAlign: "left" }}>
           <strong>Birthdate:</strong>
@@ -363,6 +385,7 @@ const handleSave = () => {
         <input
           type="date"
           defaultValue={userDetails.birthDate || ""}
+          onChange={(e) => handleInputChange("birthDate", e.target.value)}
           disabled={!isEditing} // Disable input if not editing
           style={{
             width: "100%", // Match column width
@@ -435,39 +458,61 @@ const handleSave = () => {
           )}
          {activeTab === "Security" && (
   <div>
-    {/* Two-Factor Authentication Toggle (UI only, no functionality) */}
+    {/* Two-Factor Authentication Toggle (UI only, left-aligned, slide switch) */}
     <div
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
         marginBottom: "30px",
         padding: "15px 20px",
         border: "1px solid #ddd",
         borderRadius: "5px",
         background: "#f9f9f9",
+        width: "fit-content"
       }}
     >
-      <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+      <span style={{ fontWeight: "bold", fontSize: "16px", marginRight: "16px" }}>
         Two-Factor Authentication
       </span>
-      <button
-        style={{
-          background: "#007BFF",
-          color: "white",
-          border: "none",
-          borderRadius: "20px",
-          padding: "8px 24px",
-          fontWeight: "bold",
-          cursor: "not-allowed",
-          opacity: 0.7,
-        }}
-        disabled
-      >
-        Enable / Disable
-      </button>
+      {/* Slide Switch */}
+      <label style={{ display: "flex", alignItems: "center", cursor: "pointer", marginLeft: 8 }}>
+        <input
+          type="checkbox"
+          checked={twoFactorEnabled}
+          onChange={() => setTwoFactorEnabled((prev) => !prev)}
+          style={{ display: "none" }}
+        />
+        <span
+          style={{
+            width: 40,
+            height: 22,
+            background: twoFactorEnabled ? "#007BFF" : "#ccc",
+            borderRadius: 22,
+            position: "relative",
+            transition: "background 0.2s",
+            display: "inline-block",
+            marginRight: 8,
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              left: twoFactorEnabled ? 20 : 2,
+              top: 2,
+              width: 18,
+              height: 18,
+              background: "#fff",
+              borderRadius: "50%",
+              transition: "left 0.2s",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.2)"
+            }}
+          />
+        </span>
+        <span style={{ fontWeight: "bold", color: twoFactorEnabled ? "#007BFF" : "#888" }}>
+          {twoFactorEnabled ? "Enabled" : "Disabled"}
+        </span>
+      </label>
     </div>
-
     {/* New Password and Confirm Password */}
     <form
       onSubmit={async (e) => {
@@ -480,8 +525,8 @@ const handleSave = () => {
           alert("Password cannot be empty!");
           return;
         }
-        if (currentUser) {
-          const userRef = ref(db, `users/Patient/${currentUser.uid}`);
+        if (user) {
+          const userRef = ref(db, `users/Patient/${user.uid}`);
           try {
             await update(userRef, { userPassword: newPassword });
             alert("Password updated successfully!");
@@ -492,7 +537,7 @@ const handleSave = () => {
           }
         }
       }}
-      style={{ maxWidth: 400, margin: "0 auto" }}
+      style={{ maxWidth: 400, margin: "0 0 0 0" }}
     >
       <div style={{ marginBottom: "15px", textAlign: "left" }}>
         <label style={{ fontWeight: "bold" }}>New Password</label>
