@@ -28,35 +28,39 @@ const DashboardDentistOwner = () => {
         }}
       >
         <div>
-          <h2>Dashboard</h2>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li style={{ marginBottom: '10px' }}>
-            <Link to="/manage-appointment" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Manage Appointment
-            </Link>
-            </li>
-            <li style={{ marginBottom: '10px' }}>
-              <Link to="/patient-record" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                View Patient Record
-              </Link>
-            </li>
-            <li style={{ marginBottom: '10px' }}>
-              <Link to="/inventory" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Inventory
-              </Link>
-            </li>
-            <li style={{ marginBottom: '10px' }}>
-              <Link to="/manage-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Manage Personnel
-              </Link>
-            </li>
-            <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }} >
-               Revenue
-              </Link>
-            </li>
-          </ul>
-        </div>
+  <ul style={{ listStyle: 'none', padding: 0 }}>
+    <li style={{ marginBottom: "10px" }}>
+      <Link to="/dashboard-dentistowner" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333", fontWeight: "bold" }}>
+        Dashboard
+      </Link>
+    </li>
+    <li style={{ marginBottom: '10px' }}>
+      <Link to="/manage-appointment" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+        Manage Appointment
+      </Link>
+    </li>
+    <li style={{ marginBottom: '10px' }}>
+      <Link to="/patient-record" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+        View Patient Record
+      </Link>
+    </li>
+    <li style={{ marginBottom: '10px' }}>
+      <Link to="/inventory" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+        Inventory
+      </Link>
+    </li>
+    <li style={{ marginBottom: '10px' }}>
+      <Link to="/manage-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+        Manage Personnel
+      </Link>
+    </li>
+    <li style={{ marginBottom: '10px' }}>
+      <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+        Revenue
+      </Link>
+    </li>
+  </ul>
+</div>
         <button
           onClick={handleLogout}
           style={{
