@@ -19,15 +19,15 @@ const ManageAppointment = () => {
   const [editFormData, setEditFormData] = useState({ services: [] });
   const navigate = useNavigate();
   const location = useLocation();
-  const encodeEmail = (email) => email.replace(/\./g, ",");
-  const decodeEmail = (encodedEmail) => encodedEmail.replace(/,/g, ".");
+  //const encodeEmail = (email) => email.replace(/\./g, ",");
+  //const decodeEmail = (encodedEmail) => encodedEmail.replace(/,/g, ".");
 
    // Retrieve userRole from navigation state
    const userRole = location.state?.userRole || "";
 
-   const addNotification = async (email, message) => {
-    const encodedEmail = encodeEmail(email); // Encode the email
-    const notificationsRef = ref(db, `notifications/${encodedEmail}`); // Reference to the notifications node
+   const addNotification = async (uid, message) => {
+    //const encodedEmail = encodeEmail(email); // Encode the email
+    const notificationsRef = ref(db, `notifications/${uid}`); // Reference to the notifications node
     const newNotification = {
       message,
       timestamp: new Date().toISOString(),
@@ -57,8 +57,6 @@ const ManageAppointment = () => {
     });
   }, [selectedDate]);
 
-
-
   // handle date change
   const handleDateChange = (date) => setSelectedDate(date);
 
@@ -77,10 +75,10 @@ const ManageAppointment = () => {
   
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
-  if (appointment) {
-    const message = "Your appointment has been canceled.";
-    addNotification(appointment.userId, message); // Add notification for the patient
-  }
+      if (appointment && appointment.uid) {
+        const message = "Your appointment has been canceled.";
+        addNotification(appointment.uid, message); // Add notification for the patient
+      }
     } catch (error) {
       console.error("Error canceling appointment:", error);
     }
@@ -110,9 +108,9 @@ const ManageAppointment = () => {
   
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
-      if (appointment) {
+      if (appointment && appointment.uid) {
         const message = "Your appointment has been confirmed.";
-        addNotification(appointment.userId, message); // Add notification for the patient
+        addNotification(appointment.uid, message); // Add notification for the patient
       }
     } catch (error) {
       console.error("Error confirming appointment:", error);
@@ -131,10 +129,10 @@ const ManageAppointment = () => {
   
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
-  if (appointment) {
-    const message = `Your appointment has been completed. Dentist remarks: '${appointment.dentistRemarks || "No remarks"}'`;
-    addNotification(appointment.userId, message); // Add notification for the patient
-  }
+      if (appointment && appointment.uid) {
+        const message = `Your appointment has been completed. Dentist remarks: '${appointment.dentistRemarks || "No remarks"}'`;
+        addNotification(appointment.uid, message); // Add notification for the patient
+      }
     } catch (error) {
       console.error("Error completing appointment:", error);
     }

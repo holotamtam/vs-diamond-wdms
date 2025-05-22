@@ -22,7 +22,7 @@ const PatientAppointmentBooking = () => {
   const [selectedDentist, setSelectedDentist] = useState("");
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
-  const sanitizeEmail = (email) => email.replace(/[.]/g, ",");
+  //const sanitizeEmail = (email) => email.replace(/[.]/g, ",");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -48,7 +48,7 @@ const PatientAppointmentBooking = () => {
       .split("T")[0];
 
     
-  const appointmentsRef = ref(db, `appointments/${formattedDate}`);
+    const appointmentsRef = ref(db, `appointments/${formattedDate}`);
     onValue(appointmentsRef, (snapshot) => {
       const data = snapshot.val();
       const fetched = data
@@ -175,7 +175,7 @@ const PatientAppointmentBooking = () => {
       .split("T")[0];
 
     const appointmentData = {
-      userId: currentUser.email,
+      email: currentUser.email,
       uid: currentUser.uid,
       date: formattedDate,
       services: selectedServices,
@@ -186,7 +186,7 @@ const PatientAppointmentBooking = () => {
       insuranceDetails: hasInsurance ? insuranceDetails : "No",
     };
 
-    const appointmentRef = ref(db, `appointments/${formattedDate}/${sanitizeEmail(currentUser.email)}`);
+    const appointmentRef = ref(db, `appointments/${formattedDate}/${currentUser.uid}`);
     try {
       await set(appointmentRef, appointmentData);
       setBookingStatus("Appointment booked successfully!");

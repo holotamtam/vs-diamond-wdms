@@ -21,7 +21,7 @@ const PatientRecord = () => {
       if (user) {
         setCurrentUser(user);
         fetchUserDetails(user.uid); // Fetch patient details from database
-        fetchCompletedAppointments(user.email); // Fetch completed appointments
+        fetchCompletedAppointments(user.uid); // Fetch completed appointments
       } else {
         setCurrentUser(null);
         setAppointments([]);
@@ -33,7 +33,7 @@ const PatientRecord = () => {
   }, []);
 
   // Function to fetch user details from Firebase database
-  const fetchUserDetails = (userId) => {
+  const fetchUserDetails = (uid) => {
     const patientsRef = ref(db, "users/Patient");
 
     onValue(patientsRef, (snapshot) => {
@@ -43,7 +43,7 @@ const PatientRecord = () => {
 
         // Iterate through patient records to find the matching user
         Object.values(patients).forEach((patient) => {
-          if (patient.uid === userId) {
+          if (patient.uid === uid) {
             userData = patient;
           }
         });
@@ -56,7 +56,7 @@ const PatientRecord = () => {
   };
 
   // Function to fetch completed appointments from Firebase database
-  const fetchCompletedAppointments = (email) => {
+  const fetchCompletedAppointments = (uid) => {
     const appointmentsRef = ref(db, "appointments");
 
     onValue(appointmentsRef, (snapshot) => {
@@ -67,7 +67,7 @@ const PatientRecord = () => {
         // Iterate through all appointments and filter completed ones
         Object.entries(allAppointments).forEach(([date, dateAppointments]) => {
           Object.entries(dateAppointments).forEach(([id, appointment]) => {
-            if (appointment.userId === email && appointment.status === "Completed") {
+            if (appointment.uid === uid && appointment.status === "Completed") {
               completedAppointments.push({ id, ...appointment });
             }
           });

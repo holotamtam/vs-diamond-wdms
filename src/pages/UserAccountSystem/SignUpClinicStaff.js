@@ -9,9 +9,6 @@ import {
   fetchSignInMethodsForEmail, 
 } from "firebase/auth";
 
-// Utility function to encode email
-const encodeEmail = (email) => email.replace(/\./g, ",");
-
 const SignUpClinicStaff = () => {
 
   // state variables
@@ -83,25 +80,12 @@ const SignUpClinicStaff = () => {
 
     try {
 
-      /*
-      // Check if the email is already in use
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      if (methods.length > 0) {
-        alert("This email is already in use. Please use a different email.");
-        return;
-      }
-      */
-
       // creates the user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, userPassword);
       const user = userCredential.user;
-
-      
-      // Encode the email to use as the UID
-      const encodedEmail = encodeEmail(email);
       
       // saves the user info in the Realtime Database
-      await set(ref(db, `users/Personnel/ClinicStaff/${encodedEmail}`), {
+      await set(ref(db, `users/Personnel/ClinicStaff/${user.uid}`), {
         uid: user.uid,
         email,
         userPassword,

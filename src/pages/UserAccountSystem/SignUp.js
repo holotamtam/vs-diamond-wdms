@@ -12,7 +12,7 @@ const SignUp = () => {
       
           <h2>Select Role:</h2>
           <Link to="/sign-up-associatedentist"><button>Dentist</button></Link>
-          <Link to="/sign-up-clinicstaff"><button>Personnel</button></Link>
+          <Link to="/sign-up-dentistowner"><button>Personnel</button></Link>
           <Link to="/sign-up-patient"><button>Patient</button></Link>
     </div>
   );

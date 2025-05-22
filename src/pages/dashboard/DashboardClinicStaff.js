@@ -36,7 +36,7 @@ const DashboardClinicStaff = () => {
             </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/PersonnelPatientRecord" state={{ userRole: "ClinicStaff" }} style={{ textDecoration: 'none', color: '#333' }}>
+              <Link to="/patient-record" state={{ userRole: "ClinicStaff" }} style={{ textDecoration: 'none', color: '#333' }}>
                 View Patient Record
               </Link>
             </li>

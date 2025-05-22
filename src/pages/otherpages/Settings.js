@@ -18,7 +18,7 @@ const Settings = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setCurrentUser(user);
+        setCurrentUser(user.uid);
         fetchUserDetails(user.uid); // Fetch user details from the database
       } else {
         setCurrentUser(null);
@@ -29,17 +29,17 @@ const Settings = () => {
     return () => unsubscribe();
   }, []);
 
-  const fetchUserDetails = (userId) => {
-    const usersRef = ref(db, "users/Patient");
+  const fetchUserDetails = (uid) => {
+    const userRef = ref(db, `users/Patient/${uid}`);
 
-    onValue(usersRef, (snapshot) => {
+    onValue(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        const users = snapshot.val();
-        const userData = Object.values(users).find((user) => user.uid === userId);
-        if (userData) {
-          setUserDetails(userData);
-        }
+        setUserDetails(snapshot.val());
+      } else {
+        console.error("User details not found.");
       }
+    }, (error) => {
+      console.error("Error fetching user details:", error.message);
     });
   };
 
@@ -57,11 +57,10 @@ const Settings = () => {
       [field]: value,
     }));
   };
-  
   // Handle save changes
 const handleSave = () => {
   if (currentUser) {
-    const userRef = ref(db, `users/Patient/${currentUser.uid}`);
+    const userRef = ref(db, `users/Patient/${currentUser}`);
 
     // Merge edited details with existing user details
     const updatedDetails = {
