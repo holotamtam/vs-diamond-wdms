@@ -126,7 +126,7 @@ const PatientRecord = () => {
           </li>
           <li style={{ marginBottom: "20px" }}>
             <Link to="/treatment-history" style={{ textDecoration: "none",
-                  color: "#007BFF", // Highlight the active link
+                  color: "#333",
                   fontWeight: "bold", }}>
               Treatment History
             </Link>

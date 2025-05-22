@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { db } from "../../backend/firebaseConfig";
 import Calendar from "react-calendar";
 import { ref, onValue, remove, update, push } from "firebase/database";
+import { getAuth, signOut } from 'firebase/auth';
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
 import ServicesList from "../../components/ServicesList";
@@ -19,14 +20,13 @@ const ManageAppointment = () => {
   const [editFormData, setEditFormData] = useState({ services: [] });
   const navigate = useNavigate();
   const location = useLocation();
-  //const encodeEmail = (email) => email.replace(/\./g, ",");
-  //const decodeEmail = (encodedEmail) => encodedEmail.replace(/,/g, ".");
+  const auth = getAuth();
+  
 
    // Retrieve userRole from navigation state
    const userRole = location.state?.userRole || "";
 
    const addNotification = async (uid, message) => {
-    //const encodedEmail = encodeEmail(email); // Encode the email
     const notificationsRef = ref(db, `notifications/${uid}`); // Reference to the notifications node
     const newNotification = {
       message,
@@ -44,18 +44,28 @@ const ManageAppointment = () => {
 
 
   // fetch appointments for the selected date
-  useEffect(() => {
-    if (!selectedDate) return;
-    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
-      .toISOString()
-      .split("T")[0];
-    const appointmentsRef = ref(db, `appointments/${formattedDate}`);
+ useEffect(() => {
+  if (!selectedDate) return;
+  const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
+    .toISOString()
+    .split("T")[0];
+  const appointmentsRef = ref(db, `appointments/${formattedDate}`);
 
-    onValue(appointmentsRef, (snapshot) => {
-      const data = snapshot.val();
-      setAppointments(data ? Object.entries(data).map(([id, value]) => ({ id, ...value })) : []);
-    });
-  }, [selectedDate]);
+  onValue(appointmentsRef, (snapshot) => {
+    const data = snapshot.val();
+    // Each appointment should have uid and patientEmail (or similar field)
+    setAppointments(
+      data
+        ? Object.entries(data).map(([id, value]) => ({
+            id,
+            ...value,
+            // fallback for backward compatibility if patientEmail is missing
+            patientEmail: value.patientEmail || "",
+          }))
+        : []
+    );
+  });
+}, [selectedDate]);
 
   // handle date change
   const handleDateChange = (date) => setSelectedDate(date);
@@ -235,22 +245,108 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
-  const handleGoBack = () => {
-    if (userRole === "DentistOwner") {
-      navigate("/dashboard-dentistowner");
-    } else if (userRole === "AssociateDentist") {
-      navigate("/dashboard-associatedentist");
-    } else if (userRole === "ClinicStaff") {
-      navigate("/dashboard-clinicstaff");
-    } else {
-      alert("Unable to determine your role. Redirecting to the home page.");
-      navigate("/"); // Default to home if role is not determined
-    }
-  };
+  // Function to handle logout
+    const handleLogout = () => {
+      signOut(auth).then(() => {
+        navigate('/', { replace: true });
+      });
+    };
+
+    
 
   return (
-    <div>
-      <button onClick={handleGoBack}>Go Back to Dashboard</button>
+    <div style={{ display: "flex", height: "100vh" }}>
+      {/* Sidebar */}
+      <div
+        style={{
+          width: "250px",
+          background: "#f4f4f4",
+          padding: "20px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          borderRight: "1px solid #ddd",
+        }}
+      >
+        <div>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            <li style={{ marginBottom: "10px" }}>
+              <Link
+                to="/dashboard-dentistowner"
+                state={{ userRole: "DentistOwner" }}
+                style={{
+                  textDecoration: "none",
+                  color: "#333",
+                  fontWeight: "normal",
+                }}
+              >
+                Dashboard
+              </Link>
+            </li>
+            <li style={{ marginBottom: "10px" }}>
+              <Link
+                to="/patient-record"
+                state={{ userRole: "DentistOwner" }}
+                style={{
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                View Patient Record
+              </Link>
+            </li>
+            <li style={{ marginBottom: "10px" }}>
+              <Link
+                to="/inventory"
+                state={{ userRole: "DentistOwner" }}
+                style={{
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Inventory
+              </Link>
+            </li>
+            <li style={{ marginBottom: "10px" }}>
+              <Link
+                to="/manage-personnel"
+                state={{ userRole: "DentistOwner" }}
+                style={{
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Manage Personnel
+              </Link>
+            </li>
+            <li style={{ marginBottom: "10px" }}>
+              <Link
+                to="/revenue"
+                state={{ userRole: "DentistOwner" }}
+                style={{
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Revenue
+              </Link>
+            </li>
+          </ul>
+        </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            background: '#f44336',
+            color: 'white',
+            border: 'none',
+            padding: '10px',
+            cursor: 'pointer',
+            borderRadius: '5px',
+          }}
+        >
+          Logout
+        </button>
+      </div>
       <div style={{ padding: "20px" }}>
         <h1>Manage Appointments</h1>
         <h2>Select Date:</h2>
@@ -284,7 +380,9 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
                         appointment.duration
                     )}
                   </td>
-                  <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.userId}</td>
+                  <td style={{ border: "1px solid black", padding: "10px" }}>
+                  {appointment.email || appointment.userId}
+                  </td>
                   <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.services.join(", ")}</td>
                   <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.dentist || "Not assigned"}</td>
                   <td
