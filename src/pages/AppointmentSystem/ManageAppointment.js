@@ -17,33 +17,69 @@ const ManageAppointment = () => {
   const [editingAppointmentId, setEditingAppointmentId] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editFormData, setEditFormData] = useState({ services: [] });
+  const [dentists, setDentists] = useState([]);
+  const [selectedDentist, setSelectedDentist] = useState("");
+  const [pendingCounts, setPendingCounts] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
-  //const encodeEmail = (email) => email.replace(/\./g, ",");
-  //const decodeEmail = (encodedEmail) => encodedEmail.replace(/,/g, ".");
+  const userRole = location.state?.userRole || "";
 
-   // Retrieve userRole from navigation state
-   const userRole = location.state?.userRole || "";
-
-   const addNotification = async (uid, message) => {
-    //const encodedEmail = encodeEmail(email); // Encode the email
-    const notificationsRef = ref(db, `notifications/${uid}`); // Reference to the notifications node
+  const addNotification = async (uid, message) => {
+    const notificationsRef = ref(db, `notifications/${uid}`);
     const newNotification = {
       message,
       timestamp: new Date().toISOString(),
       read: false,
     };
-  
+
     try {
-      const newNotificationRef = await push(notificationsRef, newNotification); // Push the notification to Firebase
+      const newNotificationRef = await push(notificationsRef, newNotification);
       console.log("Notification added successfully with ID:", newNotificationRef.key);
     } catch (error) {
       console.error("Error adding notification:", error);
     }
   };
 
+  // Fetch dentists from Firebase (Personnel/DentistOwner and Personnel/AssociateDentist)
+  useEffect(() => {
+    const dentistOwnerRef = ref(db, "users/Personnel/DentistOwner");
+    const associateDentistRef = ref(db, "users/Personnel/AssociateDentist");
 
-  // fetch appointments for the selected date
+    Promise.all([
+      new Promise((resolve) => {
+        onValue(dentistOwnerRef, (snapshot) => {
+          const data = snapshot.val();
+          const dentistOwners = data
+            ? Object.entries(data).map(([id, value]) => ({
+                uid: id,
+                firstName: value.firstName,
+                lastName: value.lastName,
+                role: "DentistOwner",
+              }))
+            : [];
+          resolve(dentistOwners);
+        });
+      }),
+      new Promise((resolve) => {
+        onValue(associateDentistRef, (snapshot) => {
+          const data = snapshot.val();
+          const associateDentists = data
+            ? Object.entries(data).map(([id, value]) => ({
+                uid: id,
+                firstName: value.firstName,
+                lastName: value.lastName,
+                role: "AssociateDentist",
+              }))
+            : [];
+          resolve(associateDentists);
+        });
+      }),
+    ]).then(([dentistOwners, associateDentists]) => {
+      setDentists([...dentistOwners, ...associateDentists]);
+    });
+  }, []);
+
+  // fetch appointments for the selected date and count pending per dentist
   useEffect(() => {
     if (!selectedDate) return;
     const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
@@ -53,9 +89,30 @@ const ManageAppointment = () => {
 
     onValue(appointmentsRef, (snapshot) => {
       const data = snapshot.val();
-      setAppointments(data ? Object.entries(data).map(([id, value]) => ({ id, ...value })) : []);
+      const allAppointments = data ? Object.entries(data).map(([id, value]) => ({ id, ...value })) : [];
+      setAppointments(allAppointments);
+
+      // Count pending per dentist
+      const counts = {};
+      allAppointments.forEach((appt) => {
+        if (appt.status === "Pending" || appt.status === "New") {
+          counts[appt.dentist] = (counts[appt.dentist] || 0) + 1;
+        }
+      });
+      setPendingCounts(counts);
     });
   }, [selectedDate]);
+
+  // Helper to get dentist display name
+  const getDentistDisplayName = (dentist) => {
+    if (!dentist) return "";
+    return `Dr. ${dentist.firstName} ${dentist.lastName}${dentist.role === "DentistOwner" ? " (Owner)" : " (Associate)"}`;
+  };
+
+  // Filter appointments by selected dentist
+  const filteredAppointments = selectedDentist
+    ? appointments.filter((appt) => appt.dentist === selectedDentist)
+    : [];
 
   // handle date change
   const handleDateChange = (date) => setSelectedDate(date);
@@ -63,27 +120,26 @@ const ManageAppointment = () => {
   // Handle appointment cancellation
   const handleCancelAppointment = async (id) => {
     if (!window.confirm("Do you want to cancel this appointment?")) return;
-  
+
     const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-  
+
     try {
       await remove(appointmentRef);
       setAppointments((prev) => prev.filter((appointment) => appointment.id !== id));
-  
+
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
       if (appointment && appointment.uid) {
         const message = "Your appointment has been canceled.";
-        addNotification(appointment.uid, message); // Add notification for the patient
+        addNotification(appointment.uid, message);
       }
     } catch (error) {
       console.error("Error canceling appointment:", error);
     }
   };
-
 
   // Handle viewing insurance details
   const handleViewInsuranceDetails = (appointment) => {
@@ -102,15 +158,15 @@ const ManageAppointment = () => {
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-  
+
     try {
       await update(appointmentRef, { status: "Confirmed" });
-  
+
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
       if (appointment && appointment.uid) {
         const message = "Your appointment has been confirmed.";
-        addNotification(appointment.uid, message); // Add notification for the patient
+        addNotification(appointment.uid, message);
       }
     } catch (error) {
       console.error("Error confirming appointment:", error);
@@ -123,15 +179,15 @@ const ManageAppointment = () => {
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-  
+
     try {
       await update(appointmentRef, { status: "Completed" });
-  
+
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
       if (appointment && appointment.uid) {
         const message = `Your appointment has been completed. Dentist remarks: '${appointment.dentistRemarks || "No remarks"}'`;
-        addNotification(appointment.uid, message); // Add notification for the patient
+        addNotification(appointment.uid, message);
       }
     } catch (error) {
       console.error("Error completing appointment:", error);
@@ -152,14 +208,14 @@ const ManageAppointment = () => {
         .toISOString()
         .split("T")[0];
       const appointmentRef = ref(db, `appointments/${formattedDate}/${editingAppointmentId}`);
-  
+
       // Find the original appointment
       const originalAppointment = appointments.find((appt) => appt.id === editingAppointmentId);
-  
+
       try {
         // Update the appointment in the database
         await update(appointmentRef, formData);
-  
+
         // Calculate start and end times
         const startTimeMinutes =
           parseInt(originalAppointment.time.split(":")[0]) * 60 +
@@ -167,38 +223,38 @@ const ManageAppointment = () => {
         const endTimeMinutes = startTimeMinutes + originalAppointment.duration;
         const formattedStartTime = formatTime(startTimeMinutes);
         const formattedEndTime = formatTime(endTimeMinutes);
-  
+
         // Check if the status has changed
         if (originalAppointment && originalAppointment.status !== formData.status) {
-  let message = "";
-  if (formData.status === "Confirmed") {
-    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
-  } else if (formData.status === "Completed") {
-    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
-  } else if (formData.status === "Pending") {
-    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
-  }
+          let message = "";
+          if (formData.status === "Confirmed") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
+          } else if (formData.status === "Completed") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
+          } else if (formData.status === "Pending") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
+          }
 
-  // Use uid for notification
-  if (message && originalAppointment.uid) {
-    addNotification(originalAppointment.uid, message);
-  }
-}
+          // Use uid for notification
+          if (message && originalAppointment.uid) {
+            addNotification(originalAppointment.uid, message);
+          }
+        }
 
-if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
-  const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
-  if (originalAppointment.uid) {
-    addNotification(originalAppointment.uid, remarksMessage);
-  }
-}
-  
+        if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
+          const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
+          if (originalAppointment.uid) {
+            addNotification(originalAppointment.uid, remarksMessage);
+          }
+        }
+
         // Update the local state
         setAppointments((prevAppointments) =>
           prevAppointments.map((appt) =>
             appt.id === editingAppointmentId ? { ...appt, ...formData } : appt
           )
         );
-  
+
         setEditingAppointmentId(null);
         setEditFormData({ services: [] });
       } catch (error) {
@@ -244,9 +300,15 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
       navigate("/dashboard-clinicstaff");
     } else {
       alert("Unable to determine your role. Redirecting to the home page.");
-      navigate("/"); // Default to home if role is not determined
+      navigate("/");
     }
   };
+
+  // Check if any dentist has pending/new appointments
+  const anyDentistHasPending = Object.values(pendingCounts).some((count) => count > 0);
+
+  // Get symbol for the selected dentist if they have pending/new appointments
+  const selectedDentistHasPending = pendingCounts[selectedDentist] > 0;
 
   return (
     <div>
@@ -256,7 +318,45 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
         <h2>Select Date:</h2>
         <Calendar onChange={handleDateChange} value={selectedDate} />
 
-        <h2>Appointments for {selectedDate.toDateString()}</h2>
+        <h2>
+          Select Dentist:
+        </h2>
+        <select
+          value={selectedDentist}
+          onChange={(e) => setSelectedDentist(e.target.value)}
+          style={{
+            borderColor: selectedDentistHasPending ? "red" : undefined,
+            fontWeight: selectedDentistHasPending ? "bold" : undefined,
+            //color: selectedDentistHasPending ? "red" : undefined,
+          }}
+        >
+          <option value="">
+            -- Select Dentist --
+            {anyDentistHasPending ? " 🔴" : ""}
+          </option>
+          {dentists.map((dentist) => {
+            const displayName = getDentistDisplayName(dentist);
+            const hasPending = pendingCounts[displayName] > 0;
+            return (
+              <option
+                key={dentist.uid}
+                value={displayName}
+                style={{
+                  color: hasPending ? "red" : undefined,
+                  fontWeight: hasPending ? "bold" : undefined,
+                }}
+              >
+                {displayName}
+                {hasPending ? " 🔴" : ""}
+              </option>
+            );
+          })}
+        </select>
+
+        <h2>
+          Appointments for {selectedDate.toDateString()}
+          {selectedDentist && ` - ${selectedDentist}`}
+        </h2>
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
           <thead>
             <tr>
@@ -269,9 +369,17 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
             </tr>
           </thead>
           <tbody>
-            {appointments.length > 0 ? (
-              appointments.map((appointment) => (
-                <tr key={appointment.id}>
+            {filteredAppointments.length > 0 ? (
+              filteredAppointments.map((appointment) => (
+                <tr
+                  key={appointment.id}
+                  style={{
+                    background:
+                      appointment.status === "Pending" || appointment.status === "New"
+                        ? "#fff3cd"
+                        : "transparent",
+                  }}
+                >
                   <td style={{ border: "1px solid black", padding: "10px" }}>
                     {formatTime(
                       parseInt(appointment.time.split(":")[0]) * 60 +
@@ -285,7 +393,7 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
                     )}
                   </td>
                   <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.userId}</td>
-                  <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.services.join(", ")}</td>
+                  <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.services && Array.isArray(appointment.services) ? appointment.services.join(", ") : ""}</td>
                   <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.dentist || "Not assigned"}</td>
                   <td
                     style={{
@@ -296,7 +404,13 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
                           ? "green"
                           : appointment.status === "Completed"
                           ? "blue"
+                          : appointment.status === "Pending" || appointment.status === "New"
+                          ? "#b8860b"
                           : "orange",
+                      fontWeight:
+                        appointment.status === "Pending" || appointment.status === "New"
+                          ? "bold"
+                          : undefined,
                     }}
                   >
                     {appointment.status}
@@ -348,7 +462,7 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
             ) : (
               <tr>
                 <td colSpan="6" style={{ textAlign: "center", padding: "10px" }}>
-                  No appointments found for this date.
+                  No appointments found for this dentist on this date.
                 </td>
               </tr>
             )}
