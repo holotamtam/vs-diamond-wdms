@@ -18,54 +18,110 @@ const ManageAppointment = () => {
   const [editingAppointmentId, setEditingAppointmentId] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editFormData, setEditFormData] = useState({ services: [] });
+  const [dentists, setDentists] = useState([]);
+  const [selectedDentist, setSelectedDentist] = useState("");
+  const [pendingCounts, setPendingCounts] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
   const auth = getAuth();
-  
 
-   // Retrieve userRole from navigation state
-   const userRole = location.state?.userRole || "";
+  // Retrieve userRole from navigation state
+  const userRole = location.state?.userRole || "";
 
-   const addNotification = async (uid, message) => {
-    const notificationsRef = ref(db, `notifications/${uid}`); // Reference to the notifications node
+  const addNotification = async (uid, message) => {
+    const notificationsRef = ref(db, `notifications/${uid}`);
     const newNotification = {
       message,
       timestamp: new Date().toISOString(),
       read: false,
     };
-  
     try {
-      const newNotificationRef = await push(notificationsRef, newNotification); // Push the notification to Firebase
-      console.log("Notification added successfully with ID:", newNotificationRef.key);
+      await push(notificationsRef, newNotification);
     } catch (error) {
       console.error("Error adding notification:", error);
     }
   };
 
+  // Fetch dentists from Firebase (Personnel/DentistOwner and Personnel/AssociateDentist)
+  useEffect(() => {
+    const dentistOwnerRef = ref(db, "users/Personnel/DentistOwner");
+    const associateDentistRef = ref(db, "users/Personnel/AssociateDentist");
 
-  // fetch appointments for the selected date
- useEffect(() => {
-  if (!selectedDate) return;
-  const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
-    .toISOString()
-    .split("T")[0];
-  const appointmentsRef = ref(db, `appointments/${formattedDate}`);
+    Promise.all([
+      new Promise((resolve) => {
+        onValue(dentistOwnerRef, (snapshot) => {
+          const data = snapshot.val();
+          const dentistOwners = data
+            ? Object.entries(data).map(([id, value]) => ({
+                uid: id,
+                firstName: value.firstName,
+                lastName: value.lastName,
+                role: "DentistOwner",
+              }))
+            : [];
+          resolve(dentistOwners);
+        });
+      }),
+      new Promise((resolve) => {
+        onValue(associateDentistRef, (snapshot) => {
+          const data = snapshot.val();
+          const associateDentists = data
+            ? Object.entries(data).map(([id, value]) => ({
+                uid: id,
+                firstName: value.firstName,
+                lastName: value.lastName,
+                role: "AssociateDentist",
+              }))
+            : [];
+          resolve(associateDentists);
+        });
+      }),
+    ]).then(([dentistOwners, associateDentists]) => {
+      setDentists([...dentistOwners, ...associateDentists]);
+    });
+  }, []);
 
-  onValue(appointmentsRef, (snapshot) => {
-    const data = snapshot.val();
-    // Each appointment should have uid and patientEmail (or similar field)
-    setAppointments(
-      data
+  // fetch appointments for the selected date and count pending per dentist
+  useEffect(() => {
+    if (!selectedDate) return;
+    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
+    const appointmentsRef = ref(db, `appointments/${formattedDate}`);
+
+    onValue(appointmentsRef, (snapshot) => {
+      const data = snapshot.val();
+      const allAppointments = data
         ? Object.entries(data).map(([id, value]) => ({
             id,
             ...value,
-            // fallback for backward compatibility if patientEmail is missing
-            patientEmail: value.patientEmail || "",
+            // Compose patientDisplay for table: prefer patientName, then email, then patientEmail, then userId
+            patientDisplay: value.patientName || value.email || value.patientEmail || value.userId || "",
           }))
-        : []
-    );
-  });
-}, [selectedDate]);
+        : [];
+      setAppointments(allAppointments);
+
+      // Count pending per dentist (by display name)
+      const counts = {};
+      allAppointments.forEach((appt) => {
+        if (appt.status === "Pending" || appt.status === "New") {
+          counts[appt.dentist] = (counts[appt.dentist] || 0) + 1;
+        }
+      });
+      setPendingCounts(counts);
+    });
+  }, [selectedDate]);
+
+  // Helper to get dentist display name
+  const getDentistDisplayName = (dentist) => {
+    if (!dentist) return "";
+    return `Dr. ${dentist.firstName} ${dentist.lastName}${dentist.role === "DentistOwner" ? " (Owner)" : " (Associate)"}`;
+  };
+
+  // Filter appointments by selected dentist
+  const filteredAppointments = selectedDentist
+    ? appointments.filter((appt) => appt.dentist === selectedDentist)
+    : appointments;
 
   // handle date change
   const handleDateChange = (date) => setSelectedDate(date);
@@ -73,27 +129,26 @@ const ManageAppointment = () => {
   // Handle appointment cancellation
   const handleCancelAppointment = async (id) => {
     if (!window.confirm("Do you want to cancel this appointment?")) return;
-  
+
     const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-  
+
     try {
       await remove(appointmentRef);
       setAppointments((prev) => prev.filter((appointment) => appointment.id !== id));
-  
+
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
       if (appointment && appointment.uid) {
         const message = "Your appointment has been canceled.";
-        addNotification(appointment.uid, message); // Add notification for the patient
+        addNotification(appointment.uid, message);
       }
     } catch (error) {
       console.error("Error canceling appointment:", error);
     }
   };
-
 
   // Handle viewing insurance details
   const handleViewInsuranceDetails = (appointment) => {
@@ -112,15 +167,15 @@ const ManageAppointment = () => {
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-  
+
     try {
       await update(appointmentRef, { status: "Confirmed" });
-  
+
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
       if (appointment && appointment.uid) {
         const message = "Your appointment has been confirmed.";
-        addNotification(appointment.uid, message); // Add notification for the patient
+        addNotification(appointment.uid, message);
       }
     } catch (error) {
       console.error("Error confirming appointment:", error);
@@ -133,15 +188,15 @@ const ManageAppointment = () => {
       .toISOString()
       .split("T")[0];
     const appointmentRef = ref(db, `appointments/${formattedDate}/${id}`);
-  
+
     try {
       await update(appointmentRef, { status: "Completed" });
-  
+
       // Add notification for the patient
       const appointment = appointments.find((appt) => appt.id === id);
       if (appointment && appointment.uid) {
         const message = `Your appointment has been completed. Dentist remarks: '${appointment.dentistRemarks || "No remarks"}'`;
-        addNotification(appointment.uid, message); // Add notification for the patient
+        addNotification(appointment.uid, message);
       }
     } catch (error) {
       console.error("Error completing appointment:", error);
@@ -162,53 +217,53 @@ const ManageAppointment = () => {
         .toISOString()
         .split("T")[0];
       const appointmentRef = ref(db, `appointments/${formattedDate}/${editingAppointmentId}`);
-  
+
       // Find the original appointment
       const originalAppointment = appointments.find((appt) => appt.id === editingAppointmentId);
-  
+
       try {
         // Update the appointment in the database
         await update(appointmentRef, formData);
-  
+
         // Calculate start and end times
         const startTimeMinutes =
-          parseInt(originalAppointment.time.split(":")[0]) * 60 +
-          parseInt(originalAppointment.time.split(":")[1]);
+          parseInt(originalAppointment.time.split(":")[0], 10) * 60 +
+          parseInt(originalAppointment.time.split(":")[1], 10);
         const endTimeMinutes = startTimeMinutes + originalAppointment.duration;
         const formattedStartTime = formatTime(startTimeMinutes);
         const formattedEndTime = formatTime(endTimeMinutes);
-  
+
         // Check if the status has changed
         if (originalAppointment && originalAppointment.status !== formData.status) {
-  let message = "";
-  if (formData.status === "Confirmed") {
-    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
-  } else if (formData.status === "Completed") {
-    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
-  } else if (formData.status === "Pending") {
-    message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
-  }
+          let message = "";
+          if (formData.status === "Confirmed") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
+          } else if (formData.status === "Completed") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
+          } else if (formData.status === "Pending") {
+            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
+          }
 
-  // Use uid for notification
-  if (message && originalAppointment.uid) {
-    addNotification(originalAppointment.uid, message);
-  }
-}
+          // Use uid for notification
+          if (message && originalAppointment.uid) {
+            addNotification(originalAppointment.uid, message);
+          }
+        }
 
-if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
-  const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
-  if (originalAppointment.uid) {
-    addNotification(originalAppointment.uid, remarksMessage);
-  }
-}
-  
+        if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
+          const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
+          if (originalAppointment.uid) {
+            addNotification(originalAppointment.uid, remarksMessage);
+          }
+        }
+
         // Update the local state
         setAppointments((prevAppointments) =>
           prevAppointments.map((appt) =>
             appt.id === editingAppointmentId ? { ...appt, ...formData } : appt
           )
         );
-  
+
         setEditingAppointmentId(null);
         setEditFormData({ services: [] });
       } catch (error) {
@@ -237,22 +292,40 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
 
   // Format time in minutes to HH:MM AM/PM format
   const formatTime = (minutes) => {
-    const hours = Math.floor(minutes / 60);
+    const hours24 = Math.floor(minutes / 60);
     const mins = minutes % 60;
+    const date = new Date(0, 0, 0, hours24, mins, 0);
+    let hours = date.getHours();
     const ampm = hours >= 12 ? "PM" : "AM";
-    const formattedHours = hours % 12 || 12;
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
     const formattedMinutes = mins < 10 ? `0${mins}` : mins;
-    return `${formattedHours}:${formattedMinutes} ${ampm}`;
+    return `${hours}:${formattedMinutes} ${ampm}`;
   };
 
   // Function to handle logout
-    const handleLogout = () => {
-      signOut(auth).then(() => {
-        navigate('/', { replace: true });
-      });
-    };
+  const handleLogout = () => {
+    signOut(auth).then(() => {
+      navigate('/', { replace: true });
+    });
+  };
 
-    
+  // Check if any dentist has pending/new appointments
+  const anyDentistHasPending = Object.values(pendingCounts).some((count) => count > 0);
+
+  // Get symbol for the selected dentist if they have pending/new appointments
+  const selectedDentistHasPending = pendingCounts[selectedDentist] > 0;
+
+  // Sort appointments by time (ascending)
+  const sortedAppointments = [...filteredAppointments].sort((a, b) => {
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    const [ah, am] = a.time.split(":");
+    const [bh, bm] = b.time.split(":");
+    const aMinutes = parseInt(ah, 10) * 60 + parseInt(am, 10);
+    const bMinutes = parseInt(bh, 10) * 60 + parseInt(bm, 10);
+    return aMinutes - bMinutes;
+  });
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
@@ -347,12 +420,50 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
           Logout
         </button>
       </div>
-      <div style={{ padding: "20px" }}>
+      {/* Main Content */}
+      <div style={{ padding: "20px", flex: 1 }}>
         <h1>Manage Appointments</h1>
         <h2>Select Date:</h2>
         <Calendar onChange={handleDateChange} value={selectedDate} />
 
-        <h2>Appointments for {selectedDate.toDateString()}</h2>
+        <h2>
+          Select Dentist:
+        </h2>
+        <select
+          value={selectedDentist}
+          onChange={(e) => setSelectedDentist(e.target.value)}
+          style={{
+            borderColor: selectedDentistHasPending ? "red" : undefined,
+            fontWeight: selectedDentistHasPending ? "bold" : undefined,
+          }}
+        >
+          <option value="">
+            -- Select Dentist --
+            {anyDentistHasPending ? " 🔴" : ""}
+          </option>
+          {dentists.map((dentist) => {
+            const displayName = getDentistDisplayName(dentist);
+            const hasPending = pendingCounts[displayName] > 0;
+            return (
+              <option
+                key={dentist.uid}
+                value={displayName}
+                style={{
+                  color: hasPending ? "red" : undefined,
+                  fontWeight: hasPending ? "bold" : undefined,
+                }}
+              >
+                {displayName}
+                {hasPending ? " 🔴" : ""}
+              </option>
+            );
+          })}
+        </select>
+
+        <h2>
+          Appointments for {selectedDate.toDateString()}
+          {selectedDentist && ` - ${selectedDentist}`}
+        </h2>
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
           <thead>
             <tr>
@@ -365,88 +476,109 @@ if (originalAppointment && originalAppointment.dentistRemarks !== formData.denti
             </tr>
           </thead>
           <tbody>
-            {appointments.length > 0 ? (
-              appointments.map((appointment) => (
-                <tr key={appointment.id}>
-                  <td style={{ border: "1px solid black", padding: "10px" }}>
-                    {formatTime(
-                      parseInt(appointment.time.split(":")[0]) * 60 +
-                        parseInt(appointment.time.split(":")[1])
-                    )}{" "}
-                    -{" "}
-                    {formatTime(
-                      parseInt(appointment.time.split(":")[0]) * 60 +
-                        parseInt(appointment.time.split(":")[1]) +
-                        appointment.duration
-                    )}
-                  </td>
-                  <td style={{ border: "1px solid black", padding: "10px" }}>
-                  {appointment.email || appointment.userId}
-                  </td>
-                  <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.services.join(", ")}</td>
-                  <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.dentist || "Not assigned"}</td>
-                  <td
+            {sortedAppointments.length > 0 ? (
+              sortedAppointments.map((appointment) => {
+                let startMinutes = 0;
+                let endMinutes = 0;
+                if (appointment.time) {
+                  const [h, m] = appointment.time.split(":");
+                  startMinutes = parseInt(h, 10) * 60 + parseInt(m, 10);
+                  endMinutes = startMinutes + (parseInt(appointment.duration, 10) || 0);
+                }
+                return (
+                  <tr
+                    key={appointment.id}
                     style={{
-                      border: "1px solid black",
-                      padding: "10px",
-                      color:
-                        appointment.status === "Confirmed"
-                          ? "green"
-                          : appointment.status === "Completed"
-                          ? "blue"
-                          : "orange",
+                      background:
+                        appointment.status === "Pending" || appointment.status === "New"
+                          ? "#fff3cd"
+                          : "transparent",
                     }}
                   >
-                    {appointment.status}
-                  </td>
-                  <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
-                    <button
-                      onClick={() => handleEditAppointment(appointment)}
+                    <td style={{ border: "1px solid black", padding: "10px" }}>
+                      {appointment.time
+                        ? `${formatTime(startMinutes)} - ${formatTime(endMinutes)}`
+                        : ""}
+                    </td>
+                    <td style={{ border: "1px solid black", padding: "10px" }}>
+                      {appointment.patientDisplay}
+                    </td>
+                    <td style={{ border: "1px solid black", padding: "10px" }}>
+                      {appointment.services && Array.isArray(appointment.services) ? appointment.services.join(", ") : ""}
+                    </td>
+                    <td style={{ border: "1px solid black", padding: "10px" }}>{appointment.dentist || "Not assigned"}</td>
+                    <td
                       style={{
-                        background: "orange",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                        marginRight: "5px",
+                        border: "1px solid black",
+                        padding: "10px",
+                        color:
+                          appointment.status === "Confirmed"
+                            ? "green"
+                            : appointment.status === "Completed"
+                            ? "blue"
+                            : appointment.status === "Pending" || appointment.status === "New"
+                            ? "#b8860b"
+                            : "orange",
+                        fontWeight:
+                          appointment.status === "Pending" || appointment.status === "New"
+                            ? "bold"
+                            : undefined,
                       }}
                     >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleCancelAppointment(appointment.id)}
-                      style={{
-                        background: "red",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    {appointment.insuranceDetails && (
+                      {appointment.status}
+                      {(appointment.status === "Pending" || appointment.status === "New") && (
+                        <span title="Pending/New" style={{ marginLeft: 6 }}>🕒</span>
+                      )}
+                    </td>
+                    <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
                       <button
-                        onClick={() => handleViewInsuranceDetails(appointment)}
+                        onClick={() => handleEditAppointment(appointment)}
                         style={{
-                          background: "blue",
+                          background: "orange",
                           color: "white",
                           border: "none",
                           padding: "5px 10px",
                           cursor: "pointer",
-                          marginLeft: "5px",
+                          marginRight: "5px",
                         }}
                       >
-                        Insurance Details
+                        Edit
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))
+                      <button
+                        onClick={() => handleCancelAppointment(appointment.id)}
+                        style={{
+                          background: "red",
+                          color: "white",
+                          border: "none",
+                          padding: "5px 10px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      {appointment.insuranceDetails && (
+                        <button
+                          onClick={() => handleViewInsuranceDetails(appointment)}
+                          style={{
+                            background: "blue",
+                            color: "white",
+                            border: "none",
+                            padding: "5px 10px",
+                            cursor: "pointer",
+                            marginLeft: "5px",
+                          }}
+                        >
+                          Insurance Details
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan="6" style={{ textAlign: "center", padding: "10px" }}>
-                  No appointments found for this date.
+                  No appointments found for this {selectedDentist ? "dentist on this date." : "date."}
                 </td>
               </tr>
             )}
