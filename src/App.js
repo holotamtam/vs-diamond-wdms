@@ -25,6 +25,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Index from './pages/index/Index';
 import Services from './pages/otherpages/Services';
 import Settings from './pages/otherpages/Settings';
+import SettingsPersonnel from './pages/otherpages/SettingsPersonnel';
 
 // Import NoPage or Error Page
 import NoPage from './pages/NoPage/NoPage';
@@ -69,6 +70,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings-personnel" element={<SettingsPersonnel />} /> {/* READ, WRITE or UPDATE */}
 
           {/* User Account System Pages */}
           <Route path="/sign-in" element={<SignIn />} /> {/* READ */}

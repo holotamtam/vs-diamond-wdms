@@ -14,6 +14,8 @@ const Settings = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [personnelType, setPersonnelType] = useState("DentistOwner"); // Default, but will update
+
 
 
   // Fetch user details from the database
@@ -32,18 +34,22 @@ const Settings = () => {
   }, []);
 
   const fetchUserDetails = (uid) => {
-    const userRef = ref(db, `users/Patient/${uid}`);
-
+  // Try each personnel type until found
+  const types = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
+  let found = false;
+  types.forEach(type => {
+    const userRef = ref(db, `users/Personnel/${type}/${uid}`);
     onValue(userRef, (snapshot) => {
-      if (snapshot.exists()) {
+      if (snapshot.exists() && !found) {
         setUserDetails(snapshot.val());
-      } else {
-        console.error("User details not found.");
+        setPersonnelType(type);
+        found = true;
       }
     }, (error) => {
-      console.error("Error fetching user details:", error.message);
+      // Handle error if needed
     });
-  };
+  });
+};
 
    // Handle logout
     const handleLogout = () => {
@@ -62,7 +68,7 @@ const Settings = () => {
   // Handle save changes
 const handleSave = () => {
   if (user) {
-    const userRef = ref(db, `users/Patient/${user.uid}`);
+    const userRef = ref(db, `users/Personnel/${personnelType}/${user.uid}`);
 
     // Merge edited details with existing user details
     const updatedDetails = {
@@ -84,90 +90,95 @@ const handleSave = () => {
 };
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
+    <div style={{ display: 'flex', height: '100vh' }}>
       {/* Sidebar */}
-       <div
-      style={{
-        width: "250px",
-        background: "#f4f4f4",
-        padding: "20px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        borderRight: "1px solid #ddd",
-      }}
-    >
-      <div>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          <li style={{ marginBottom: "20px" }}>
-            <Link
-              to="/dashboard-patient"
-              style={{
-                textDecoration: "none",
-                color: "#333",
-              }}
-            >
-              Dashboard
-            </Link>
-          </li>
-          <li style={{ marginBottom: "20px" }}>
-            <Link to="/treatment-history" style={{ textDecoration: "none",
-                  color: "#333" }}>
-              Treatment History
-            </Link>
-          </li>
-          <li style={{ marginBottom: "20px" }}>
-            <Link to="/settings" style={{ textDecoration: "none",
-                  color: "#333",
-                  fontWeight: "bold", }}>
-              Settings
-            </Link>
-          </li>
-        </ul>
-      </div>
-      {/* Move user profile section above the sign out button */}
-      <div>
-        {userDetails && (
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
-            <img
-              src={userDetails.profilePictureUrl || "https://via.placeholder.com/50"}
-              alt="Profile"
-              style={{
-                width: "50px",
-                height: "50px",
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "2px solid #ddd",
-                marginRight: "10px",
-              }}
-            />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <span style={{ fontWeight: "bold", fontSize: "15px", textAlign: "left" }}>
-                {userDetails.firstName} {userDetails.middleName} {userDetails.lastName}
-              </span>
-              <span style={{ fontSize: "13px", color: "#555", textAlign: "left" }}>
-                {userDetails.email}
-              </span>
+      <div
+        style={{
+          width: '250px',
+          background: '#f4f4f4',
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          borderRight: '1px solid #ddd',
+        }}
+      >
+        <div>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            <li style={{ marginBottom: "10px" }}>
+              <Link to="/dashboard-dentistowner" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333" }}>
+                Dashboard
+              </Link>
+            </li>
+            <li style={{ marginBottom: '10px' }}>
+              <Link to="/patient-record" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Patient Record
+              </Link>
+            </li>
+            <li style={{ marginBottom: '10px' }}>
+              <Link to="/inventory" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Inventory
+              </Link>
+            </li>
+            <li style={{ marginBottom: '10px' }}>
+              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Revenue
+              </Link>
+            </li>
+            <li style={{ marginBottom: '10px' }}>
+              <Link to="/manage-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Manage Personnel
+              </Link>
+            </li>
+            <li style={{ marginBottom: "10px" }}>
+              <Link to="/settings-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333", fontWeight: "bold" }}>
+                Settings
+              </Link>
+            </li>
+          </ul>
+        </div>
+        {/* User Profile and Logout */}
+        <div>
+          {userDetails && (
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
+              <img
+                src={userDetails.profilePictureUrl || "https://via.placeholder.com/50"}
+                alt="Profile"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid #ddd",
+                  marginRight: "10px",
+                }}
+              />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <span style={{ fontWeight: "bold", fontSize: "15px", textAlign: "left" }}>
+                  {userDetails.firstName} {userDetails.middleName} {userDetails.lastName}
+                </span>
+                <span style={{ fontSize: "13px", color: "#555", textAlign: "left" }}>
+                  {userDetails.email}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-        <button
-          onClick={handleLogout}
-          style={{
-            background: "#f44336",
-            color: "white",
-            border: "none",
-            padding: "10px",
-            cursor: "pointer",
-            borderRadius: "5px",
-            width: "100%",
-          }}
-        >
-          Sign Out
-        </button>
+          )}
+          <button
+            onClick={handleLogout}
+            style={{
+              background: '#f44336',
+              color: 'white',
+              border: 'none',
+              padding: '10px',
+              cursor: 'pointer',
+              borderRadius: '5px',
+              width: "100%",
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
-    </div>
-
       {/* Main Content */}
       <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
         <h1 style={{ margin: 0, fontSize: "24px", color: "#333",  }}>Settings</h1>
@@ -398,25 +409,6 @@ const handleSave = () => {
           }}
         />
       </div>
-      <div>
-        <label style={{ marginBottom: "5px", display: "block", textAlign: "left" }}>
-          <strong>Occupation:</strong>
-        </label>
-        <input
-          type="text"
-          defaultValue={userDetails.occupation || "N/A"}
-          disabled={!isEditing} // Disable input if not editing
-          style={{
-            width: "100%", // Match column width
-            height: "35px", // Consistent height
-            padding: "5px",
-            border: "1px solid #ddd",
-            borderRadius: "5px",
-            background: isEditing ? "white" : "#f4f4f4",
-            fontSize: "14px", // Consistent font size
-          }}
-        />
-      </div>
     </div>
 
     {/* Third Row: Address */}
@@ -531,7 +523,7 @@ const handleSave = () => {
       await updatePassword(user, newPassword);
 
       // Optionally update in your database for record-keeping
-      const userRef = ref(db, `users/Patient/${user.uid}`);
+      const userRef = ref(db, `users/Personnel/${personnelType}/${user.uid}`);
       await update(userRef, { userPassword: newPassword });
 
       alert("Password updated successfully!");

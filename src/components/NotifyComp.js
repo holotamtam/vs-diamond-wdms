@@ -6,6 +6,7 @@ import { ref, onValue, remove, update } from "firebase/database";
 // Fetch notifications
 export const fetchNotifications = (currentUser, callback) => {
   if (currentUser) {
+    // Use only currentUser.uid, not email
     const notificationsRef = ref(db, `notifications/${currentUser.uid}`);
     onValue(notificationsRef, (snapshot) => {
       const data = snapshot.val();

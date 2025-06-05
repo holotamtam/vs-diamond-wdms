@@ -227,7 +227,7 @@ useEffect(() => {
               to="/dashboard-patient"
               style={{
                 textDecoration: "none",
-                color: "#007BFF",
+                color: "#333",
                 fontWeight: "bold",
               }}
             >
@@ -321,7 +321,7 @@ useEffect(() => {
                   color: "white",
                   borderRadius: "50%",
                   padding: "5px 10px",
-                  fontSize: "12px",
+                  fontSize: "10px",
                 }}
               >
                 {unreadCount}
@@ -339,41 +339,46 @@ useEffect(() => {
       boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
       width: "300px",
       zIndex: 1000,
+      padding: 0, // Remove extra padding here
     }}
   >
-    <h4 style={{ padding: "10px", borderBottom: "1px solid #ddd" }}>Notifications</h4>
-    <ul style={{ listStyle: "none", padding: "10px", margin: 0 }}>
-      {notifications.map((notification) => (
-        <li
-          key={notification.id}
-          style={{
-            padding: "10px",
-            borderBottom: "1px solid #ddd",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            cursor: "pointer",
-          }}
-          onClick={() => handleMarkAsRead(notification.id)} // Mark notification as read on click
-        >
-          <span>{notification.message}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent triggering markAsRead when deleting
-              deleteNotification(auth.currentUser, notification.id);
-            }}
+    <h4 style={{ padding: "10px", borderBottom: "1px solid #ddd", margin: 0 }}>Notifications</h4>
+    <ul style={{ listStyle: "none", padding: "0 10px", margin: 0, maxHeight: "300px", overflowY: "auto" }}>
+      {notifications.length === 0 ? (
+        <li style={{ padding: "10px", textAlign: "center", color: "#888" }}>No notifications</li>
+      ) : (
+        notifications.map((notification) => (
+          <li
+            key={notification.id}
             style={{
-              background: "transparent",
-              border: "none",
-              color: "red",
+              padding: "10px 0",
+              borderBottom: "1px solid #eee",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               cursor: "pointer",
-              fontSize: "14px",
             }}
+            onClick={() => handleMarkAsRead(notification.id)}
           >
-            ✖
-          </button>
-        </li>
-      ))}
+            <span>{notification.message}</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteNotification(auth.currentUser, notification.id);
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "red",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              ✖
+            </button>
+          </li>
+        ))
+      )}
     </ul>
     <div style={{ textAlign: "center", padding: "10px", borderTop: "1px solid #ddd" }}>
       <Link to="/notifications" style={{ textDecoration: "none", color: "#007BFF" }}>
