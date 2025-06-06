@@ -220,9 +220,19 @@ const ManageInventory = () => {
             {inventoryList.map((item) => (
               <tr key={item.key}>
                 <td>{item.itemName}</td>
-                <td>{item.pricePerUnit}</td>
+                <td>
+                  {Number(item.pricePerUnit).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
                 <td>{item.quantity}</td>
-                <td>{item.totalCost}</td>
+                <td>
+                  {Number(item.totalCost).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
                 <td>
                   <button onClick={() => handleEdit(item)}>Edit</button>{" "}
                   <button onClick={() => handleDelete(item.key)} style={{ color: "red" }}>Delete</button>
@@ -234,7 +244,13 @@ const ManageInventory = () => {
             <tr style={{ fontWeight: "bold", backgroundColor: "#f9f9f9" }}>
               <td colSpan="3" style={{ textAlign: "right" }}>Grand Total:</td>
               <td>
-                ₱{inventoryList.reduce((acc, item) => acc + (item.totalCost || 0), 0).toFixed(2)}
+                ₱
+                {inventoryList
+                  .reduce((acc, item) => acc + (item.totalCost || 0), 0)
+                  .toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
               </td>
               <td></td>
             </tr>
