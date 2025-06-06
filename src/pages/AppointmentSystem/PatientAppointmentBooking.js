@@ -3,7 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { ref, set, get, onValue } from "firebase/database";
+import { ref, set, onValue } from "firebase/database";
 import Modal from "react-modal";
 import { Link, useNavigate } from "react-router-dom";
 import ServicesList from "../../components/ServicesList";
@@ -25,8 +25,8 @@ const PatientAppointmentBooking = () => {
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
   const navigate = useNavigate();
-  
 
+  // fheck if user is authenticated
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user ? user : null);
@@ -34,15 +34,18 @@ const PatientAppointmentBooking = () => {
     return () => unsubscribe();
   }, []);
 
+  // fetch appointments for the selected date
   useEffect(() => {
     if (!selectedDate) return;
     fetchAppointmentsForDate();
   }, [selectedDate]);
 
+  // fetch dentists 
   useEffect(() => {
     fetchDentists();
   }, []);
 
+  // fetch appointments for the selected date
   const fetchAppointmentsForDate = () => {
     const formattedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
@@ -50,7 +53,6 @@ const PatientAppointmentBooking = () => {
       .toISOString()
       .split("T")[0];
 
-    
     const appointmentsRef = ref(db, `appointments/${formattedDate}`);
     onValue(appointmentsRef, (snapshot) => {
       const data = snapshot.val();
@@ -61,11 +63,11 @@ const PatientAppointmentBooking = () => {
     });
   };
 
-  // Fetch user details for sidebar profile
+  // fetch user details for sidebar profile
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Fetch user details from your database
+        // fetch user details from your database
         const usersRef = ref(db, "users/Patient");
         onValue(usersRef, (snapshot) => {
           if (snapshot.exists()) {
@@ -79,11 +81,12 @@ const PatientAppointmentBooking = () => {
     return () => unsubscribe();
   }, []);
 
+  // fetch dentists from Firebase
   const fetchDentists = () => {
     const dentistOwnerRef = ref(db, "users/Personnel/DentistOwner");
     const associateDentistRef = ref(db, "users/Personnel/AssociateDentist");
-  
-    // Fetch dentists from both paths
+
+    // Fetch dentists from both paths (DentistOwner and AssociateDentist)
     Promise.all([
       new Promise((resolve) => {
         onValue(dentistOwnerRef, (snapshot) => {
@@ -131,38 +134,41 @@ const PatientAppointmentBooking = () => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
+  // PER-DENTIST TIME SLOT LOGIC
   const generateTimeSlots = () => {
-  const officeStartTime = 9 * 60; // 9:00 AM in minutes
-  const officeEndTime = 17 * 60; // 5:00 PM in minutes
-  const totalDuration = 60; // Fixed duration of 1 hour for all services
-  const slots = [];
+    const officeStartTime = 9 * 60; // 9:00 AM in minutes
+    const officeEndTime = 17 * 60; // 5:00 PM in minutes
+    const totalDuration = 60; // fixed duration of 1 hour for all services (tempporary)
+    const slots = [];
 
-  for (let start = officeStartTime; start + totalDuration <= officeEndTime; start += 30) {
-    const end = start + totalDuration;
-    const slot = {
-      start,
-      end,
-      display: `${formatTime(start)} - ${formatTime(end)}`,
-      isAvailable: true, // Default to available
-    };
+    for (let start = officeStartTime; start + totalDuration <= officeEndTime; start += 30) {
+      const end = start + totalDuration;
+      const slot = {
+        start,
+        end,
+        display: `${formatTime(start)} - ${formatTime(end)}`,
+        isAvailable: true, // Default to available
+      };
 
-    // Check if the slot overlaps any existing appointment
-    const overlaps = appointments.some((appointment) => {
-      const appointmentStart =
-        parseInt(appointment.time.split(":")[0]) * 60 +
-        parseInt(appointment.time.split(":")[1]);
-      const appointmentEnd = appointmentStart + appointment.duration;
-      return start < appointmentEnd && end > appointmentStart;
-    });
+      // checks for overlaps for the selected dentist
+      const overlaps = appointments
+        .filter((appointment) => appointment.dentist === selectedDentist)
+        .some((appointment) => {
+          const appointmentStart =
+            parseInt(appointment.time.split(":")[0]) * 60 +
+            parseInt(appointment.time.split(":")[1]);
+          const appointmentEnd = appointmentStart + appointment.duration;
+          return start < appointmentEnd && end > appointmentStart;
+        });
 
-    if (overlaps) {
-      slot.isAvailable = false; // Mark as unavailable
+      if (overlaps) {
+        slot.isAvailable = false; // Mark as unavailable
+      }
+
+      slots.push(slot);
     }
-
-    slots.push(slot);
-  }
-  return slots;
-};
+    return slots;
+  };
 
   const handleAppointmentSubmit = () => {
     if (!selectedDate || selectedServices.length === 0 || !selectedTimeSlot || !selectedDentist) {
@@ -195,6 +201,9 @@ const PatientAppointmentBooking = () => {
       .toISOString()
       .split("T")[0];
 
+    // Generate a unique ID for the appointment
+    const appointmentId = `${currentUser.uid}_${Date.now()}`;
+
     const appointmentData = {
       email: currentUser.email,
       uid: currentUser.uid,
@@ -205,9 +214,10 @@ const PatientAppointmentBooking = () => {
       dentist: selectedDentist,
       status: "Pending",
       insuranceDetails: hasInsurance ? insuranceDetails : "No",
+      id: appointmentId,
     };
 
-    const appointmentRef = ref(db, `appointments/${formattedDate}/${currentUser.uid}`);
+    const appointmentRef = ref(db, `appointments/${formattedDate}/${appointmentId}`);
     try {
       await set(appointmentRef, appointmentData);
       setBookingStatus("Appointment booked successfully!");
@@ -222,194 +232,199 @@ const PatientAppointmentBooking = () => {
   };
 
   // Handle logout
-    const handleLogout = () => {
-      signOut(auth).then(() => {
-        navigate("/", { replace: true });
-      });
-    };
+  const handleLogout = () => {
+    signOut(auth).then(() => {
+      navigate("/", { replace: true });
+    });
+  };
 
   return (
-  <div style={{ display: "flex", height: "100vh" }}>
-    {/* Sidebar */}
-    <div
-      style={{
-        width: "250px",
-        background: "#f4f4f4",
-        padding: "20px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        borderRight: "1px solid #ddd",
-      }}
-    >
-      <div>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          <li style={{ marginBottom: "20px" }}>
-            <Link
-              to="/dashboard-patient"
-              style={{
-                textDecoration: "none",
-                color: "#333",
-              }}
-            >
-              Dashboard
-            </Link>
-          </li>
-          <li style={{ marginBottom: "20px" }}>
-            <Link to="/treatment-history" style={{ textDecoration: "none", color: "#333" }}>
-              Treatment History
-            </Link>
-          </li>
-          <li style={{ marginBottom: "20px" }}>
-            <Link to="/settings" style={{ textDecoration: "none", color: "#333" }}>
-              Settings
-            </Link>
-          </li>
-        </ul>
-      </div>
-      <div>
-        {userDetails && (
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
-            <img
-              src={userDetails.profilePictureUrl || "https://via.placeholder.com/50"}
-              alt="Profile"
-              style={{
-                width: "50px",
-                height: "50px",
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "2px solid #ddd",
-                marginRight: "10px",
-              }}
-            />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <span style={{ fontWeight: "bold", fontSize: "15px", textAlign: "left" }}>
-                {userDetails.firstName} {userDetails.middleName} {userDetails.lastName}
-              </span>
-              <span style={{ fontSize: "13px", color: "#555", textAlign: "left" }}>
-                {userDetails.email}
-              </span>
+    <div style={{ display: "flex", height: "100vh" }}>
+      {/* Sidebar */}
+      <div
+        style={{
+          width: "250px",
+          background: "#f4f4f4",
+          padding: "20px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          borderRight: "1px solid #ddd",
+        }}
+      >
+        <div>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            <li style={{ marginBottom: "20px" }}>
+              <Link
+                to="/dashboard-patient"
+                style={{
+                  textDecoration: "none",
+                  color: "#333",
+                }}
+              >
+                Dashboard
+              </Link>
+            </li>
+            <li style={{ marginBottom: "20px" }}>
+              <Link to="/treatment-history" style={{ textDecoration: "none", color: "#333" }}>
+                Treatment History
+              </Link>
+            </li>
+            <li style={{ marginBottom: "20px" }}>
+              <Link to="/settings" style={{ textDecoration: "none", color: "#333" }}>
+                Settings
+              </Link>
+            </li>
+          </ul>
+        </div>
+        <div>
+          {userDetails && (
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
+              <img
+                src={userDetails.profilePictureUrl || "https://via.placeholder.com/50"}
+                alt="Profile"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid #ddd",
+                  marginRight: "10px",
+                }}
+              />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <span style={{ fontWeight: "bold", fontSize: "15px", textAlign: "left" }}>
+                  {userDetails.firstName} {userDetails.middleName} {userDetails.lastName}
+                </span>
+                <span style={{ fontSize: "13px", color: "#555", textAlign: "left" }}>
+                  {userDetails.email}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-        <button
-          onClick={handleLogout}
-          style={{
-            background: "#f44336",
-            color: "white",
-            border: "none",
-            padding: "10px",
-            cursor: "pointer",
-            borderRadius: "5px",
-            width: "100%",
-          }}
-        >
-          Sign Out
-        </button>
+          )}
+          <button
+            onClick={handleLogout}
+            style={{
+              background: "#f44336",
+              color: "white",
+              border: "none",
+              padding: "10px",
+              cursor: "pointer",
+              borderRadius: "5px",
+              width: "100%",
+            }}
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
-    </div>
 
-    {/* Main Content */}
-    <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "row", gap: "40px" }}>
-  {/* Left column: appointment form and summary */}
-  <div style={{ width: "350px", minWidth: "300px" }}>
-    <h1>Make an Appointment</h1>
-    <h2>Select Date:</h2>
-    <Calendar onChange={setSelectedDate} value={selectedDate} />
+      {/* Main Content */}
+      <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "row", gap: "40px" }}>
+        {/* Left column: appointment form and summary */}
+        <div style={{ width: "350px", minWidth: "300px" }}>
+          <h1>Make an Appointment</h1>
+          <h2>Select Date:</h2>
+          <Calendar onChange={setSelectedDate} value={selectedDate} />
 
-    <h2>Select Services:</h2>
-    <div>
-      <button onClick={() => setDropdownOpen(!dropdownOpen)} style={{ width: "100%" }}>
-        {selectedServices.length > 0 ? selectedServices.join(", ") : "Select Services"} {dropdownOpen ? "▲" : "▼"}
-      </button>
-      {dropdownOpen && (
-        <ServicesList selectedServices={selectedServices} toggleService={toggleService} />
-      )}
-    </div>
+          <h2>Select Services:</h2>
+          <div>
+            <button onClick={() => setDropdownOpen(!dropdownOpen)} style={{ width: "100%" }}>
+              {selectedServices.length > 0 ? selectedServices.join(", ") : "Select Services"} {dropdownOpen ? "▲" : "▼"}
+            </button>
+            {dropdownOpen && (
+              <ServicesList selectedServices={selectedServices} toggleService={toggleService} />
+            )}
+          </div>
 
-    <h2>Select Dentist:</h2>
-    <select
-      value={selectedDentist}
-      onChange={(e) => setSelectedDentist(e.target.value)}
-      style={{ width: "100%", padding: "10px", marginTop: "10px" }}
-    >
-      <option value="">Select a Dentist</option>
-      {dentists.map((dentist) => (
-        <option key={dentist.id} value={dentist.name}>
-          {dentist.name}
-        </option>
-      ))}
-    </select>
+          <h2>Select Dentist:</h2>
+          <select
+            value={selectedDentist}
+            onChange={(e) => {
+              setSelectedDentist(e.target.value);
+              setSelectedTimeSlot(null); // Reset time slot when dentist changes
+            }}
+            style={{ width: "100%", padding: "10px", marginTop: "10px" }}
+          >
+            <option value="">Select a Dentist</option>
+            {dentists.map((dentist) => (
+              <option key={dentist.id} value={dentist.name}>
+                {dentist.name}
+              </option>
+            ))}
+          </select>
 
-    <div style={{ border: "1px solid #ddd", padding: "10px", borderRadius: "5px", marginTop: "20px" }}>
-      <h2>Appointment Summary</h2>
-      <p><strong>Date:</strong> {selectedDate ? selectedDate.toDateString() : "Not selected"}</p>
-      <p><strong>Services:</strong> {selectedServices.length > 0 ? selectedServices.join(", ") : "Not selected"}</p>
-      <p><strong>Time Slot:</strong> {selectedTimeSlot ? selectedTimeSlot.display : "Not selected"}</p>
-      <p><strong>Dentist:</strong> {selectedDentist || "Not selected"}</p>
-    </div>
-  </div>
+          <div style={{ border: "1px solid #ddd", padding: "10px", borderRadius: "5px", marginTop: "20px" }}>
+            <h2>Appointment Summary</h2>
+            <p><strong>Date:</strong> {selectedDate ? selectedDate.toDateString() : "Not selected"}</p>
+            <p><strong>Services:</strong> {selectedServices.length > 0 ? selectedServices.join(", ") : "Not selected"}</p>
+            <p><strong>Time Slot:</strong> {selectedTimeSlot ? selectedTimeSlot.display : "Not selected"}</p>
+            <p><strong>Dentist:</strong> {selectedDentist || "Not selected"}</p>
+          </div>
+        </div>
 
-  {/* Right column: table */}
-  <div style={{ flex: 1, minWidth: 0 }}>
-    <h2>Available Time Slots:</h2>
-    <div style={{ width: "100%", overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
-        <thead>
-          <tr>
-            <th style={{ border: "1px solid black", padding: "10px" }}>Time Slot</th>
-            <th style={{ border: "1px solid black", padding: "10px" }}>Select</th>
-          </tr>
-        </thead>
-        <tbody>
-          {generateTimeSlots().map((slot, index) => (
-            <tr
-              key={index}
-              style={{
-                background: selectedTimeSlot === slot ? "#e0f7fa" : "transparent",
-              }}
-            >
-              <td style={{ border: "1px solid black", padding: "10px" }}>{slot.display}</td>
-              <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
-                <button
-                  onClick={() => slot.isAvailable && setSelectedTimeSlot(slot)}
-                  disabled={!slot.isAvailable}
-                  style={{
-                    background: selectedTimeSlot === slot ? "#4CAF50" : slot.isAvailable ? "#007BFF" : "#ddd",
-                    color: slot.isAvailable ? "white" : "#888",
-                    border: "none",
-                    padding: "5px 10px",
-                    cursor: slot.isAvailable ? "pointer" : "not-allowed",
-                    borderRadius: "5px",
-                  }}
-                >
-                  {selectedTimeSlot === slot
-                    ? "Selected"
-                    : slot.isAvailable
-                    ? "Select"
-                    : "Unavailable"}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        {/* Right column: table */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2>Available Time Slots:</h2>
+          <div style={{ width: "100%", overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
+              <thead>
+                <tr>
+                  <th style={{ border: "1px solid black", padding: "10px" }}>Time Slot</th>
+                  <th style={{ border: "1px solid black", padding: "10px" }}>Select</th>
+                </tr>
+              </thead>
+              <tbody>
+                {generateTimeSlots().map((slot, index) => (
+                  <tr
+                    key={index}
+                    style={{
+                      background: selectedTimeSlot === slot ? "#e0f7fa" : "transparent",
+                    }}
+                  >
+                    <td style={{ border: "1px solid black", padding: "10px" }}>{slot.display}</td>
+                    <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
+                      <button
+                        onClick={() => slot.isAvailable && setSelectedTimeSlot(slot)}
+                        disabled={!slot.isAvailable || !selectedDentist}
+                        style={{
+                          background: selectedTimeSlot === slot ? "#4CAF50" : slot.isAvailable && selectedDentist ? "#007BFF" : "#ddd",
+                          color: slot.isAvailable && selectedDentist ? "white" : "#888",
+                          border: "none",
+                          padding: "5px 10px",
+                          cursor: slot.isAvailable && selectedDentist ? "pointer" : "not-allowed",
+                          borderRadius: "5px",
+                        }}
+                      >
+                        {selectedTimeSlot === slot
+                          ? "Selected"
+                          : !selectedDentist
+                          ? "Select Dentist"
+                          : slot.isAvailable
+                          ? "Select"
+                          : "Unavailable"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-    <button
-      onClick={handleAppointmentSubmit}
-      style={{ marginTop: "10px", width: "100%" }}
-    >
-      Book Appointment
-    </button>
+          <button
+            onClick={handleAppointmentSubmit}
+            style={{ marginTop: "10px", width: "100%" }}
+          >
+            Book Appointment
+          </button>
 
-    {bookingStatus && (
-      <p style={{ textAlign: "center", color: bookingStatus.includes("success") ? "green" : "red" }}>
-        {bookingStatus}
-      </p>
-    )}
-  </div>
-</div>
+          {bookingStatus && (
+            <p style={{ textAlign: "center", color: bookingStatus.includes("success") ? "green" : "red" }}>
+              {bookingStatus}
+            </p>
+          )}
+        </div>
+      </div>
 
       <Modal
         isOpen={showInsuranceModal}

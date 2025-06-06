@@ -27,7 +27,7 @@ const SignIn = () => {
       console.log("Sign in successful, userCredential:", userCredential);
       const user = userCredential.user;
 
-      // Check if the email is verified
+      //Check if the email is verified
       //if (!user.emailVerified) {
         //alert("Please verify your email before signing in. Check your inbox for the verification email.");
         //await auth.signOut();

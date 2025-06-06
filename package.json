@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "cra-template": "1.2.0",
-    "firebase": "^11.3.1",
+    "firebase": "^11.9.0",
     "react": "^19.0.0",
     "react-calendar": "^5.1.0",
     "react-calendars": "^1.1.2",
