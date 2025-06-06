@@ -49,7 +49,6 @@ import DashboardClinicStaff from './pages/dashboard/DashboardClinicStaff';
 import PatientAppointmentBooking from './pages/AppointmentSystem/PatientAppointmentBooking'; // READ OR WRITE
 import PatientAppointmentStatus from './pages/AppointmentSystem/PatientAppointmentStatus'; // READ OR WRITE
 import ManageAppointment from './pages/AppointmentSystem/ManageAppointment'; // READ, WRITE or UPDATE
-import Notification from './pages/AppointmentSystem/Notification'; // READ OR WRITE
 
 // Import Patient Record System Pages
 import PatientRecord from './pages/PatientRecordSystem/PatientRecord'; // READ, WRITE or UPDATE
@@ -91,7 +90,6 @@ function App() {
           <Route path="/patient-appointment-booking" element={<PatientAppointmentBooking />} /> {/* READ or WRITE */}
           <Route path="/patient-appointment-status" element={<PatientAppointmentStatus />} /> {/* READ or WRITE */}
           <Route path="/manage-appointment" element={<ManageAppointment />} /> {/* READ, WRITE or UPDATE */}
-          <Route path="/notifications" element={<Notification />} /> {/* READ or WRITE */}
 
           {/* Patient Record System */}
           <Route path="/treatment-history" element={<PatientRecord />} /> {/* READ, WRITE or UPDATE */}

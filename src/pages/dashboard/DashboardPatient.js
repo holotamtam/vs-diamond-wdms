@@ -8,6 +8,7 @@ import {
   deleteNotification,
   //encodeEmail,
 } from "../../components/NotifyComp";
+import Modal from "react-modal";
 
 const DashboardPatient = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const DashboardPatient = () => {
   const [nextAppointment, setNextAppointment] = useState(null);
   const [latestAppointments, setLatestAppointments] = useState([]);
   const [userDetails, setUserDetails] = useState(null);
+   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
 
 
 
@@ -381,13 +383,27 @@ useEffect(() => {
       )}
     </ul>
     <div style={{ textAlign: "center", padding: "10px", borderTop: "1px solid #ddd" }}>
-      <Link to="/notifications" style={{ textDecoration: "none", color: "#007BFF" }}>
-        View Notifications
-      </Link>
-    </div>
-  </div>
-)}
-          </div>
+                    <button
+                      onClick={() => {
+                        setShowNotifications(false);
+                        setShowNotificationsModal(true);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#007BFF",
+                        cursor: "pointer",
+                        fontSize: "15px",
+                        textDecoration: "underline",
+                        padding: 0,
+                      }}
+                    >
+                      View Notifications
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
           {/* Schedule Appointment Button */}
           <Link to="/patient-appointment-booking">
@@ -406,6 +422,85 @@ useEffect(() => {
           </Link>
         </div>
       </div>
+
+      {/* Notifications Modal */}
+        <Modal
+          isOpen={showNotificationsModal}
+          onRequestClose={() => setShowNotificationsModal(false)}
+          contentLabel="All Notifications"
+          style={{
+            overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
+            content: {
+              top: "50%",
+              left: "50%",
+              right: "auto",
+              bottom: "auto",
+              marginRight: "-50%",
+              transform: "translate(-50%, -50%)",
+              padding: "20px",
+              borderRadius: "10px",
+              width: "600px",
+              maxHeight: "80vh",
+              overflowY: "auto",
+            },
+          }}
+        >
+          <h2 style={{ marginTop: 0 }}>All Notifications</h2>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {notifications.length === 0 ? (
+              <li style={{ padding: "10px", textAlign: "center", color: "#888" }}>No notifications</li>
+            ) : (
+              notifications.map((notification) => (
+                <li
+                  key={notification.id}
+                  style={{
+                    padding: "10px 0",
+                    borderBottom: "1px solid #eee",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleMarkAsRead(notification.id)}
+                >
+                  <span>{notification.message}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteNotification(auth.currentUser, notification.id, setNotifications);
+                    }}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "red",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                    }}
+                  >
+                    ✖
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+          <div style={{ textAlign: "center", marginTop: "20px" }}>
+            <button
+              onClick={() => setShowNotificationsModal(false)}
+              style={{
+                background: "#007BFF",
+                color: "white",
+                border: "none",
+                padding: "8px 18px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "15px",
+                fontWeight: "bold"
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
 
       {/* Top Widgets */}
       <div style={{ display: "flex", gap: "20px" }}>
