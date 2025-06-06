@@ -26,7 +26,7 @@ const PatientAppointmentBooking = () => {
   const [userDetails, setUserDetails] = useState(null);
   const navigate = useNavigate();
 
-  // fheck if user is authenticated
+  // Check if user is authenticated
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user ? user : null);
@@ -34,18 +34,18 @@ const PatientAppointmentBooking = () => {
     return () => unsubscribe();
   }, []);
 
-  // fetch appointments for the selected date
+  // Fetch appointments for the selected date
   useEffect(() => {
     if (!selectedDate) return;
     fetchAppointmentsForDate();
   }, [selectedDate]);
 
-  // fetch dentists 
+  // Fetch dentists
   useEffect(() => {
     fetchDentists();
   }, []);
 
-  // fetch appointments for the selected date
+  // Fetch appointments for the selected date
   const fetchAppointmentsForDate = () => {
     const formattedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
@@ -63,11 +63,10 @@ const PatientAppointmentBooking = () => {
     });
   };
 
-  // fetch user details for sidebar profile
+  // Fetch user details for sidebar profile
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // fetch user details from your database
         const usersRef = ref(db, "users/Patient");
         onValue(usersRef, (snapshot) => {
           if (snapshot.exists()) {
@@ -81,12 +80,11 @@ const PatientAppointmentBooking = () => {
     return () => unsubscribe();
   }, []);
 
-  // fetch dentists from Firebase
+  // Fetch dentists from Firebase
   const fetchDentists = () => {
     const dentistOwnerRef = ref(db, "users/Personnel/DentistOwner");
     const associateDentistRef = ref(db, "users/Personnel/AssociateDentist");
 
-    // Fetch dentists from both paths (DentistOwner and AssociateDentist)
     Promise.all([
       new Promise((resolve) => {
         onValue(dentistOwnerRef, (snapshot) => {
@@ -134,48 +132,73 @@ const PatientAppointmentBooking = () => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
-  // PER-DENTIST TIME SLOT LOGIC
+  // Updated: Time slot logic to allow selection if any dentist is available
   const generateTimeSlots = () => {
     const officeStartTime = 9 * 60; // 9:00 AM in minutes
     const officeEndTime = 17 * 60; // 5:00 PM in minutes
-    const totalDuration = 60; // fixed duration of 1 hour for all services (tempporary)
+    const totalDuration = 60; // fixed duration of 1 hour for all services (temporary)
     const slots = [];
 
     for (let start = officeStartTime; start + totalDuration <= officeEndTime; start += 30) {
       const end = start + totalDuration;
-      const slot = {
-        start,
-        end,
-        display: `${formatTime(start)} - ${formatTime(end)}`,
-        isAvailable: true, // Default to available
-      };
 
-      // checks for overlaps for the selected dentist
-      const overlaps = appointments
-        .filter((appointment) => appointment.dentist === selectedDentist)
-        .some((appointment) => {
+      // Check if current user already has an appointment at this time
+      const userHasAppointment = appointments.some((appointment) => {
+        if (!currentUser) return false;
+        if (appointment.uid !== currentUser.uid) return false;
+        const appointmentStart =
+          parseInt(appointment.time.split(":")[0]) * 60 +
+          parseInt(appointment.time.split(":")[1]);
+        const appointmentEnd = appointmentStart + appointment.duration;
+        return start < appointmentEnd && end > appointmentStart;
+      });
+
+      // Find dentists who are available for this slot
+      const availableDentists = dentists.filter((dentist) => {
+        const dentistAppointments = appointments.filter(
+          (appointment) => appointment.dentist === dentist.name
+        );
+        const hasOverlap = dentistAppointments.some((appointment) => {
           const appointmentStart =
             parseInt(appointment.time.split(":")[0]) * 60 +
             parseInt(appointment.time.split(":")[1]);
           const appointmentEnd = appointmentStart + appointment.duration;
           return start < appointmentEnd && end > appointmentStart;
         });
+        return !hasOverlap;
+      });
 
-      if (overlaps) {
-        slot.isAvailable = false; // Mark as unavailable
+      let isAvailable = false;
+      let slotStatus = "available";
+      if (userHasAppointment) {
+        isAvailable = false;
+        slotStatus = "your";
+      } else if (selectedDentist) {
+        isAvailable = availableDentists.some((dentist) => dentist.name === selectedDentist);
+        if (!isAvailable) slotStatus = "reserved";
+      } else {
+        isAvailable = availableDentists.length > 0;
+        if (!isAvailable) slotStatus = "reserved";
       }
 
-      slots.push(slot);
+      slots.push({
+        start,
+        end,
+        display: `${formatTime(start)} - ${formatTime(end)}`,
+        isAvailable,
+        availableDentists,
+        slotStatus, // "available", "your", or "reserved"
+      });
     }
     return slots;
   };
 
+  // Updated: Allow booking if a slot is available, even if no dentist is selected
   const handleAppointmentSubmit = () => {
-    if (!selectedDate || selectedServices.length === 0 || !selectedTimeSlot || !selectedDentist) {
-      setBookingStatus("Please select a date, services, time slot, and dentist.");
+    if (!selectedDate || selectedServices.length === 0 || !selectedTimeSlot) {
+      setBookingStatus("Please select a date, services, and time slot.");
       return;
     }
-
     setShowInsuranceModal(true);
   };
 
@@ -194,6 +217,7 @@ const PatientAppointmentBooking = () => {
     submitAppointment(true, insuranceDetails);
   };
 
+  // Updated: Assign a random available dentist if none selected
   const submitAppointment = async (hasInsurance, insuranceDetails = null) => {
     const formattedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
@@ -201,8 +225,21 @@ const PatientAppointmentBooking = () => {
       .toISOString()
       .split("T")[0];
 
-    // Generate a unique ID for the appointment
     const appointmentId = `${currentUser.uid}_${Date.now()}`;
+
+    let assignedDentist = selectedDentist;
+    if (!assignedDentist) {
+      const slot = generateTimeSlots().find(
+        (slot) => slot.start === selectedTimeSlot.start && slot.end === selectedTimeSlot.end
+      );
+      if (slot && slot.availableDentists.length > 0) {
+        const randomIndex = Math.floor(Math.random() * slot.availableDentists.length);
+        assignedDentist = slot.availableDentists[randomIndex].name;
+      } else {
+        setBookingStatus("No available dentist for the selected time slot.");
+        return;
+      }
+    }
 
     const appointmentData = {
       email: currentUser.email,
@@ -211,7 +248,7 @@ const PatientAppointmentBooking = () => {
       services: selectedServices,
       time: `${Math.floor(selectedTimeSlot.start / 60)}:${selectedTimeSlot.start % 60 === 0 ? "00" : selectedTimeSlot.start % 60}`,
       duration: 60,
-      dentist: selectedDentist,
+      dentist: assignedDentist,
       status: "Pending",
       insuranceDetails: hasInsurance ? insuranceDetails : "No",
       id: appointmentId,
@@ -359,7 +396,7 @@ const PatientAppointmentBooking = () => {
             <p><strong>Date:</strong> {selectedDate ? selectedDate.toDateString() : "Not selected"}</p>
             <p><strong>Services:</strong> {selectedServices.length > 0 ? selectedServices.join(", ") : "Not selected"}</p>
             <p><strong>Time Slot:</strong> {selectedTimeSlot ? selectedTimeSlot.display : "Not selected"}</p>
-            <p><strong>Dentist:</strong> {selectedDentist || "Not selected"}</p>
+            <p><strong>Dentist:</strong> {selectedDentist || (selectedTimeSlot && !selectedDentist ? "Auto-assign" : "Not selected")}</p>
           </div>
         </div>
 
@@ -384,26 +421,25 @@ const PatientAppointmentBooking = () => {
                   >
                     <td style={{ border: "1px solid black", padding: "10px" }}>{slot.display}</td>
                     <td style={{ border: "1px solid black", padding: "10px", textAlign: "center" }}>
-                      <button
-                        onClick={() => slot.isAvailable && setSelectedTimeSlot(slot)}
-                        disabled={!slot.isAvailable || !selectedDentist}
-                        style={{
-                          background: selectedTimeSlot === slot ? "#4CAF50" : slot.isAvailable && selectedDentist ? "#007BFF" : "#ddd",
-                          color: slot.isAvailable && selectedDentist ? "white" : "#888",
-                          border: "none",
-                          padding: "5px 10px",
-                          cursor: slot.isAvailable && selectedDentist ? "pointer" : "not-allowed",
-                          borderRadius: "5px",
-                        }}
-                      >
-                        {selectedTimeSlot === slot
-                          ? "Selected"
-                          : !selectedDentist
-                          ? "Select Dentist"
-                          : slot.isAvailable
-                          ? "Select"
-                          : "Unavailable"}
-                      </button>
+                      {slot.isAvailable ? (
+                        <button
+                          onClick={() => setSelectedTimeSlot(slot)}
+                          style={{
+                            background: selectedTimeSlot === slot ? "#4CAF50" : "#007BFF",
+                            color: "white",
+                            border: "none",
+                            padding: "5px 10px",
+                            cursor: "pointer",
+                            borderRadius: "5px",
+                          }}
+                        >
+                          {selectedTimeSlot === slot ? "Selected" : "Select"}
+                        </button>
+                      ) : slot.slotStatus === "your" ? (
+                        <span style={{ color: "#2196F3", fontWeight: "bold" }}>Your Appointment</span>
+                      ) : (
+                        <span style={{ color: "#888" }}>Reserved</span>
+                      )}
                     </td>
                   </tr>
                 ))}
