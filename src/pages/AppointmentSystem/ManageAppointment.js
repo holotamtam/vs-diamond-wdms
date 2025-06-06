@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { db } from "../../backend/firebaseConfig";
 import Calendar from "react-calendar";
 import { ref, onValue, remove, update, push } from "firebase/database";
-import { getAuth, signOut } from 'firebase/auth';
+import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
 import ServicesList from "../../components/ServicesList";
@@ -21,6 +21,7 @@ const ManageAppointment = () => {
   const [dentists, setDentists] = useState([]);
   const [selectedDentist, setSelectedDentist] = useState("");
   const [pendingCounts, setPendingCounts] = useState({});
+  const [userDetails, setUserDetails] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const auth = getAuth();
@@ -303,6 +304,34 @@ const ManageAppointment = () => {
     return `${hours}:${formattedMinutes} ${ampm}`;
   };
 
+
+   // Fetch user details for sidebar profile (search all personnel types)
+    useEffect(() => {
+      const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
+      let unsubscribes = [];
+      const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          let found = false;
+          personnelTypes.forEach(type => {
+            const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
+            const unsub = onValue(userRef, (snapshot) => {
+              if (snapshot.exists() && !found) {
+                setUserDetails(snapshot.val());
+                found = true;
+                // Unsubscribe from other listeners
+                unsubscribes.forEach(u => u());
+              }
+            });
+            unsubscribes.push(() => unsub());
+          });
+        }
+      });
+      return () => {
+        unsubscribeAuth();
+        unsubscribes.forEach(u => u());
+      };
+    }, [auth]);
+
   // Function to handle logout
   const handleLogout = () => {
     signOut(auth).then(() => {
@@ -375,19 +404,48 @@ const ManageAppointment = () => {
             </li>
           </ul>
         </div>
-        <button
-          onClick={handleLogout}
-          style={{
-            background: '#f44336',
-            color: 'white',
-            border: 'none',
-            padding: '10px',
-            cursor: 'pointer',
-            borderRadius: '5px',
-          }}
-        >
-          Logout
-        </button>
+        {/* User Profile and Logout */}
+        <div>
+          {userDetails && (
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
+              <img
+                src={userDetails.profilePictureUrl || "https://via.placeholder.com/50"}
+                alt="Profile"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid #ddd",
+                  marginRight: "10px",
+                }}
+              />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <span style={{ fontWeight: "bold", fontSize: "15px", textAlign: "left" }}>
+                  {userDetails.firstName} {userDetails.middleName} {userDetails.lastName}
+                </span>
+                <span style={{ fontSize: "13px", color: "#555", textAlign: "left" }}>
+                  {userDetails.email}
+                </span>
+              </div>
+            </div>
+          )}
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            style={{
+              background: '#f44336',
+              color: 'white',
+              border: 'none',
+              padding: '10px',
+              cursor: 'pointer',
+              borderRadius: '5px',
+              width: "100%",
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
       {/* Main Content */}
       <div style={{ padding: "20px", flex: 1 }}>
