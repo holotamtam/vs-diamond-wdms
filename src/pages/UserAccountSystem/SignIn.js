@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword, updatePassword } from "firebase/auth";
 import app from "../../backend/firebaseConfig";
 import { getDatabase, ref, get } from "firebase/database";
@@ -90,22 +90,142 @@ const SignIn = () => {
   };
 
   return (
-    <div>
-      <button onClick={() => navigate(-1)}>Back</button>
-      <h3>Sign In</h3>
-      <input
-        type="text"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={handleSignIn}>Sign In</button>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#fdf9f3",
+      }}
+    >
+       <div
+        style={{
+          background: "#fff",
+          borderRadius: 16,
+          boxShadow: "0 4px 24px #0002",
+          padding: "40px 32px 32px 32px",
+          minWidth: 380,
+          maxWidth: 440,
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          position: "relative",
+        }}
+      >
+        {/* Back button at top left */}
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            position: "absolute",
+            top: 18,
+            left: 18,
+            background: "none",
+            border: "none",
+            color: "#888",
+            cursor: "pointer",
+            fontSize: 14,
+            textDecoration: "underline",
+            padding: 0,
+          }}
+        >
+          Back
+        </button>
+        <img
+          src="/logo192.png"
+          alt="VS Diamond Logo"
+          style={{ width: 64, height: 64, borderRadius: "50%", marginBottom: 16, marginTop: 10, display: "block" }}
+        />
+        <h2 style={{ color: "#555", marginBottom: 8, fontWeight: "bold", textAlign: "center" }}>Welcome to VSDiamond</h2>
+        {/* Email input with label */}
+        <div style={{ width: "100%", marginBottom: 12, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <label htmlFor="email" style={{ alignSelf: "flex-start", marginBottom: 4, color: "#555", fontWeight: 500, fontSize: 15 }}>
+            Email
+          </label>
+          <input
+            id="email"
+            type="text"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+              fontSize: 16,
+              textAlign: "center"
+            }}
+          />
+        </div>
+        {/* Password input with label and forgot password */}
+        <div style={{ width: "100%", marginBottom: 12, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <label htmlFor="password" style={{ alignSelf: "flex-start", marginBottom: 4, color: "#555", fontWeight: 500, fontSize: 15 }}>
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+              fontSize: 16,
+              textAlign: "center"
+            }}
+          />
+        </div>
+        {/* Forgot password link above Sign In button, right aligned */}
+        <div style={{ width: "100%", display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+          <Link to="/forgot-password" style={{ color: "#555", fontSize: 14, textDecoration: "underline" }}>
+            Forgot password?
+          </Link>
+        </div>
+        <button
+          onClick={handleSignIn}
+          style={{
+            width: "100%",
+            background: "#C29E38",
+            color: "white",
+            border: "none",
+            padding: "12px 0",
+            borderRadius: "999px",
+            fontWeight: "bold",
+            fontSize: "16px",
+            cursor: "pointer",
+            marginBottom: 16,
+          }}
+        >
+          Sign In
+        </button>
+        <div style={{ marginTop: "10px", width: "100%", textAlign: "center" }}>
+          <span style={{ color: "#555", fontSize: "15px", marginRight: 8 }}>
+            Don't have an account?
+          </span>
+          <Link to="/sign-up">
+            <button
+              style={{
+                background: "#fff",
+                color: "#C29E38",
+                border: "2px solid #C29E38",
+                padding: "8px 24px",
+                borderRadius: "999px",
+                fontWeight: "bold",
+                fontSize: "15px",
+                cursor: "pointer",
+                marginLeft: 8,
+              }}
+            >
+              Sign Up
+            </button>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };
