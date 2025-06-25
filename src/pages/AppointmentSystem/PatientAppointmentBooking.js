@@ -193,12 +193,31 @@ const PatientAppointmentBooking = () => {
     return slots;
   };
 
+  // Function to disable past dates in calendar
+  const tileDisabled = ({ date }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day
+    return date < today;
+  };
+
   // Updated: Allow booking if a slot is available, even if no dentist is selected
   const handleAppointmentSubmit = () => {
     if (!selectedDate || selectedServices.length === 0 || !selectedTimeSlot) {
       setBookingStatus("Please select a date, services, and time slot.");
       return;
     }
+
+    // Check if selected date is in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDateStart = new Date(selectedDate);
+    selectedDateStart.setHours(0, 0, 0, 0);
+    
+    if (selectedDateStart < today) {
+      setBookingStatus("Cannot book appointments on past dates.");
+      return;
+    }
+
     setShowInsuranceModal(true);
   };
 
@@ -362,7 +381,12 @@ const PatientAppointmentBooking = () => {
         <div style={{ width: "350px", minWidth: "300px" }}>
           <h1>Make an Appointment</h1>
           <h2>Select Date:</h2>
-          <Calendar onChange={setSelectedDate} value={selectedDate} />
+          <Calendar 
+            onChange={setSelectedDate} 
+            value={selectedDate} 
+            tileDisabled={tileDisabled}
+            minDate={new Date()}
+          />
 
           <h2>Select Services:</h2>
           <div>

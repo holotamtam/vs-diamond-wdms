@@ -89,7 +89,16 @@ const ManagePersonnel = () => {
   }, [auth]);
 
     // function to handle deletion of personnel accounts
-    const handleDelete = async (userType, id) => {
+    const handleDelete = async (userType, id, personName) => {
+        // Show confirmation dialog before deletion
+        const isConfirmed = window.confirm(
+            `Are you sure you want to delete ${personName} (${userType})?\n\nThis action cannot be undone.`
+        );
+
+        if (!isConfirmed) {
+            return; // User cancelled the deletion
+        }
+
         const db = getDatabase(app);
         const userRef = ref(db, `users/Personnel/${userType}/${id}`);
 
@@ -223,7 +232,7 @@ const ManagePersonnel = () => {
                         clinicStaff.map(person => (
                             <li key={person.id}>
                                 {person.firstName} {person.lastName} ({person.email})
-                                <button onClick={() => handleDelete("ClinicStaff", person.id)}>Delete</button>
+                                <button onClick={() => handleDelete("ClinicStaff", person.id, `${person.firstName} ${person.lastName}`)}>Delete</button>
                             </li>
                         ))
                     ) : (
@@ -250,7 +259,7 @@ const ManagePersonnel = () => {
                                     {isCurrentUser ? (
                                         <strong>(You)</strong>
                                     ) : (
-                                        <button onClick={() => handleDelete("DentistOwner", person.id)}>Delete</button>
+                                        <button onClick={() => handleDelete("DentistOwner", person.id, `${person.firstName} ${person.lastName}`)}>Delete</button>
                                     )}
                                 </li>
                             );
@@ -266,7 +275,7 @@ const ManagePersonnel = () => {
                         associateDentist.map(person => (
                             <li key={person.id}>
                                 {person.firstName} {person.lastName} ({person.email})
-                                <button onClick={() => handleDelete("AssociateDentist", person.id)}>Delete</button>
+                                <button onClick={() => handleDelete("AssociateDentist", person.id, `${person.firstName} ${person.lastName}`)}>Delete</button>
                             </li>
                         ))
                     ) : (

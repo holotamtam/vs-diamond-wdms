@@ -11,6 +11,7 @@ const ManageInventory = () => {
   const [pricePerUnit, setPricePerUnit] = useState("");
   const [quantity, setQuantity] = useState("");
   const [inventoryList, setInventoryList] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
   const location = useLocation();
   const [userDetails, setUserDetails] = useState(null);
   const navigate = useNavigate();
@@ -20,6 +21,15 @@ const ManageInventory = () => {
   // Calculate total cost based on price per unit and quantity
   const totalCost = (parseFloat(pricePerUnit) || 0) * (parseInt(quantity) || 0);
   const db = getDatabase();
+
+  // Function to check if item name already exists (case-insensitive)
+  const isItemNameExists = (name, excludeKey = null) => {
+    return inventoryList.some(item => {
+      const existingName = item.itemName.toLowerCase().trim();
+      const newName = name.toLowerCase().trim();
+      return existingName === newName && item.key !== excludeKey;
+    });
+  };
 
   // Fetch inventory data from Firebase on component mount
   useEffect(() => {
@@ -66,9 +76,34 @@ const ManageInventory = () => {
 
   // Handle form submission for adding or editing items
   const handleSubmit = () => {
+    // Clear any previous error messages
+    setErrorMessage("");
+
+    // Validate required fields
+    if (!itemName.trim()) {
+      setErrorMessage("Item name is required.");
+      return;
+    }
+
+    if (!pricePerUnit || parseFloat(pricePerUnit) <= 0) {
+      setErrorMessage("Price per unit must be greater than 0.");
+      return;
+    }
+
+    if (!quantity || parseInt(quantity) <= 0) {
+      setErrorMessage("Quantity must be greater than 0.");
+      return;
+    }
+
+    // Check for duplicate item names
+    if (isItemNameExists(itemName, editingKey)) {
+      setErrorMessage("An item with this name already exists in the inventory.");
+      return;
+    }
+
     const key = itemName.replace(/\s+/g, "_").toLowerCase();
     const itemData = {
-      itemName,
+      itemName: itemName.trim(),
       pricePerUnit: parseFloat(pricePerUnit),
       quantity: parseInt(quantity),
       totalCost,
@@ -86,6 +121,7 @@ const ManageInventory = () => {
     setItemName(item.itemName);
     setPricePerUnit(item.pricePerUnit.toString());
     setQuantity(item.quantity.toString());
+    setErrorMessage("");
     setIsModalOpen(true);
   };
 
@@ -102,6 +138,13 @@ const ManageInventory = () => {
     setPricePerUnit("");
     setQuantity("");
     setEditingKey(null);
+    setErrorMessage("");
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    resetForm();
   };
 
   // Handle logout
@@ -266,27 +309,63 @@ const ManageInventory = () => {
               backgroundColor: "#fff", padding: "20px", borderRadius: "8px", minWidth: "300px"
             }}>
               <h3>{editingKey ? "Edit" : "Add"} Item or Equipment</h3>
+              
+              {/* Error Message Display */}
+              {errorMessage && (
+                <div style={{
+                  backgroundColor: "#ffebee",
+                  color: "#c62828",
+                  padding: "10px",
+                  borderRadius: "4px",
+                  marginBottom: "15px",
+                  border: "1px solid #ffcdd2"
+                }}>
+                  {errorMessage}
+                </div>
+              )}
+
               <label>
-                Item Name:
-                <input type="text" value={itemName} onChange={(e) => setItemName(e.target.value)} />
+                Item Name: <span style={{ color: "red" }}>*</span>
+                <input 
+                  type="text" 
+                  value={itemName} 
+                  onChange={(e) => setItemName(e.target.value)}
+                  required
+                  style={{ width: "100%", padding: "8px", marginTop: "5px", boxSizing: "border-box" }}
+                />
               </label>
-              <br />
+              <br /><br />
               <label>
-                Price per Unit:
-                <input type="number" value={pricePerUnit} onChange={(e) => setPricePerUnit(e.target.value)} />
+                Price per Unit: <span style={{ color: "red" }}>*</span>
+                <input 
+                  type="number" 
+                  value={pricePerUnit} 
+                  onChange={(e) => setPricePerUnit(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  required
+                  style={{ width: "100%", padding: "8px", marginTop: "5px", boxSizing: "border-box" }}
+                />
               </label>
-              <br />
+              <br /><br />
               <label>
-                Quantity:
-                <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                Quantity: <span style={{ color: "red" }}>*</span>
+                <input 
+                  type="number" 
+                  value={quantity} 
+                  onChange={(e) => setQuantity(e.target.value)}
+                  min="1"
+                  required
+                  style={{ width: "100%", padding: "8px", marginTop: "5px", boxSizing: "border-box" }}
+                />
               </label>
-              <br />
+              <br /><br />
               <label>
                 Total Cost: <strong>₱{totalCost.toFixed(2)}</strong>
               </label>
               <br /><br />
               <button onClick={handleSubmit}>{editingKey ? "Update" : "Submit"}</button>
-              <button onClick={() => setIsModalOpen(false)} style={{ marginLeft: "10px" }}>Cancel</button>
+              <button onClick={handleModalClose} style={{ marginLeft: "10px" }}>Cancel</button>
             </div>
           </div>
         )}
