@@ -64,29 +64,23 @@ const ManagePersonnel = () => {
 
     // Fetch user details for sidebar profile (search all personnel types)
   useEffect(() => {
-    const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
-    let unsubscribes = [];
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        let found = false;
-        personnelTypes.forEach(type => {
-          const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
-          const unsub = onValue(userRef, (snapshot) => {
-            if (snapshot.exists() && !found) {
-              setUserDetails(snapshot.val());
-              found = true;
-              unsubscribes.forEach(u => u());
-            }
-          });
-          unsubscribes.push(() => unsub());
-        });
+  const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
+  const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      for (const type of personnelTypes) {
+        const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          setUserDetails(snapshot.val());
+          break;
+        }
       }
-    });
-    return () => {
-      unsubscribeAuth();
-      unsubscribes.forEach(u => u());
-    };
-  }, [auth]);
+    }
+  });
+  return () => {
+    authUnsubscribe();
+  };
+}, [auth]);
 
     // function to handle deletion of personnel accounts
     const handleDelete = async (userType, id, personName) => {
@@ -158,12 +152,12 @@ const ManagePersonnel = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Revenue
+              <Link to="/analytics" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Analytics
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/manage-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333', fontWeight: "bold" }}>
+              <Link to="/manage-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#C7A76C', fontWeight: "bold" }}>
                 Manage Personnel
               </Link>
             </li>

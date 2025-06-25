@@ -2,7 +2,7 @@ import React, { useState, useEffect, use } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../backend/firebaseConfig";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, get } from "firebase/database";
 import {
   markNotificationAsRead,
   deleteNotification,
@@ -54,17 +54,16 @@ const DashboardPatient = () => {
 
   // Fetch user details for sidebar profile
 useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
     if (user) {
       // Fetch user details from your database
       const usersRef = ref(db, "users/Patient");
-      onValue(usersRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const users = snapshot.val();
-          const userData = Object.values(users).find((u) => u.uid === user.uid);
-          if (userData) setUserDetails(userData);
-        }
-      });
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+        const userData = Object.values(users).find((u) => u.uid === user.uid);
+        if (userData) setUserDetails(userData);
+      }
     }
   });
   return () => unsubscribe();
@@ -229,7 +228,7 @@ useEffect(() => {
               to="/dashboard-patient"
               style={{
                 textDecoration: "none",
-                color: "#333",
+                color: "#C7A76C",
                 fontWeight: "bold",
               }}
             >

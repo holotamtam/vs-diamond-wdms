@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged, signOut, updatePassword } from "firebase/auth";
-import { ref, onValue, update } from "firebase/database";
+import { ref, get, update } from "firebase/database";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -31,19 +31,19 @@ const Settings = () => {
     return () => unsubscribe();
   }, []);
 
-  const fetchUserDetails = (uid) => {
-    const userRef = ref(db, `users/Patient/${uid}`);
-
-    onValue(userRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setUserDetails(snapshot.val());
-      } else {
-        console.error("User details not found.");
-      }
-    }, (error) => {
-      console.error("Error fetching user details:", error.message);
-    });
-  };
+  const fetchUserDetails = async (uid) => {
+  const userRef = ref(db, `users/Patient/${uid}`);
+  try {
+    const snapshot = await get(userRef);
+    if (snapshot.exists()) {
+      setUserDetails(snapshot.val());
+    } else {
+      console.error("User details not found.");
+    }
+  } catch (error) {
+    console.error("Error fetching user details:", error.message);
+  }
+};
 
    // Handle logout
     const handleLogout = () => {
@@ -118,7 +118,7 @@ const handleSave = () => {
           </li>
           <li style={{ marginBottom: "20px" }}>
             <Link to="/settings" style={{ textDecoration: "none",
-                  color: "#333",
+                  color: "#C7A76C",
                   fontWeight: "bold", }}>
               Settings
             </Link>
@@ -224,18 +224,23 @@ const handleSave = () => {
                   </button>
                 )}
                 <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  style={{
-                    background: isEditing ? "#f44336" : "#007BFF",
-                    color: "white",
-                    border: "none",
-                    padding: "10px 20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                  }}
-                >
-                  {isEditing ? "Cancel" : "Edit Profile"}
-                </button>
+  onClick={() => {
+    if (isEditing) {
+      setEditedDetails({}); // Reset edits on cancel
+    }
+    setIsEditing(!isEditing);
+  }}
+  style={{
+    background: isEditing ? "#f44336" : "#007BFF",
+    color: "white",
+    border: "none",
+    padding: "10px 20px",
+    cursor: "pointer",
+    borderRadius: "5px",
+  }}
+>
+  {isEditing ? "Cancel" : "Edit Profile"}
+</button>
               </div>
 
               {/* Profile Picture */}
@@ -383,20 +388,26 @@ const handleSave = () => {
           <strong>Birthdate:</strong>
         </label>
         <input
-          type="date"
-          defaultValue={userDetails.birthDate || ""}
-          onChange={(e) => handleInputChange("birthDate", e.target.value)}
-          disabled={!isEditing} // Disable input if not editing
-          style={{
-            width: "100%", // Match column width
-            height: "35px", // Consistent height
-            padding: "5px",
-            border: "1px solid #ddd",
-            borderRadius: "5px",
-            background: isEditing ? "white" : "#f4f4f4",
-            fontSize: "14px", // Consistent font size
-          }}
-        />
+  type="date"
+  value={
+    isEditing
+      ? (editedDetails.birthDate !== undefined
+          ? editedDetails.birthDate
+          : userDetails.birthDate || "")
+      : userDetails.birthDate || ""
+  }
+  onChange={(e) => handleInputChange("birthDate", e.target.value)}
+  disabled={!isEditing}
+  style={{
+    width: "100%",
+    height: "35px",
+    padding: "5px",
+    border: "1px solid #ddd",
+    borderRadius: "5px",
+    background: isEditing ? "white" : "#f4f4f4",
+    fontSize: "14px",
+  }}
+/>
       </div>
       <div>
         <label style={{ marginBottom: "5px", display: "block", textAlign: "left" }}>

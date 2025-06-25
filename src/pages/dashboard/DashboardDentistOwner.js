@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db } from "../../backend/firebaseConfig";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, get } from "firebase/database";
 
 const DashboardDentistOwner = () => {
   const navigate = useNavigate();
@@ -12,8 +12,6 @@ const DashboardDentistOwner = () => {
   // Notification state
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  // User profile state
   const [userDetails, setUserDetails] = useState(null);
 
   // Fetch notifications for the current user (DentistOwner)
@@ -33,30 +31,23 @@ const DashboardDentistOwner = () => {
 
   // Fetch user details for sidebar profile (search all personnel types)
   useEffect(() => {
-    const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
-    let unsubscribes = [];
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        let found = false;
-        personnelTypes.forEach(type => {
-          const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
-          const unsub = onValue(userRef, (snapshot) => {
-            if (snapshot.exists() && !found) {
-              setUserDetails(snapshot.val());
-              found = true;
-              // Unsubscribe from other listeners
-              unsubscribes.forEach(u => u());
-            }
-          });
-          unsubscribes.push(() => unsub());
-        });
+  const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
+  const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      for (const type of personnelTypes) {
+        const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          setUserDetails(snapshot.val());
+          break;
+        }
       }
-    });
-    return () => {
-      unsubscribeAuth();
-      unsubscribes.forEach(u => u());
-    };
-  }, [auth]);
+    }
+  });
+  return () => {
+    authUnsubscribe();
+  };
+}, [auth]);
 
   // Calculate unread notifications count
   const unreadCount = notifications.filter((notification) => !notification.read).length;
@@ -90,7 +81,7 @@ const DashboardDentistOwner = () => {
         <div>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ marginBottom: "10px" }}>
-              <Link to="/dashboard-dentistowner" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333", fontWeight: "bold" }}>
+              <Link to="/dashboard-dentistowner" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#C7A76C", fontWeight: "bold" }}>
                 Dashboard
               </Link>
             </li>
@@ -105,8 +96,8 @@ const DashboardDentistOwner = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Revenue
+              <Link to="/analytics" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Analytics
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
@@ -165,9 +156,20 @@ const DashboardDentistOwner = () => {
         </div>
       </div>
       {/* Main Content */}
-      <div style={{ flex: 1, padding: "32px", display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* Top Bar */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        {/* Header Bar */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "#fff",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+          padding: "28px 32px 18px 32px",
+          borderBottom: "1px solid #f0eae2",
+          position: "sticky",
+          top: 0,
+          zIndex: 10
+        }}>
           {/* Dashboard Title */}
           <h1 style={{ margin: 0, fontSize: "24px", color: "#333" }}>Dashboard</h1>
           {/* Right Side Buttons */}
