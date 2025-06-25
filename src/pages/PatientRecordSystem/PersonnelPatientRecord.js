@@ -179,7 +179,7 @@ const PersonnelPatientRecord = () => {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#f8f5ef" }}>
       {/* Sidebar */}
       <div
         style={{
@@ -189,7 +189,7 @@ const PersonnelPatientRecord = () => {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          borderRight: "1px solid #ddd",
+          borderRight: "1px solid #ddd"
         }}
       >
         <div>
@@ -226,7 +226,7 @@ const PersonnelPatientRecord = () => {
             </li>
           </ul>
         </div>
-         {/* User Profile and Logout */}
+        {/* User Profile and Logout */}
         <div>
           {userDetails && (
             <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
@@ -268,113 +268,189 @@ const PersonnelPatientRecord = () => {
           </button>
         </div>
       </div>
-      {/* Main Content */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        {/* Place all your existing PersonnelPatientRecord JSX here */}
-        <div style={{ padding: "20px" }}>
-          {/* ...existing content from your return statement... */}
-          <h2>Patient Records</h2>
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={handleSearch}
-            style={{ marginBottom: "20px", padding: "10px", width: "30%" }}
-          />
-
-          {selectedPatient ? (
-            <div>
-              <button onClick={() => setSelectedPatient(null)}>Back to Patient List</button>
-              <h3>
-                {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName} ({selectedPatient})
-              </h3>
-
-              <div style={{ marginTop: "10px", marginBottom: "20px" }}>
-                <button onClick={() => setShowTreatmentHistory(true)} style={{ marginRight: "10px" }}>
-                  View Treatment History
-                </button>
-                <button onClick={() => setShowDentalChart(true)}>View Dental Chart</button>
-              </div>
-
-              <div style={{ marginBottom: "20px" }}>
-                <button
-                  onClick={() => setActiveTab("personal")}
-                  style={{
-                    marginRight: "10px",
-                    backgroundColor: activeTab === "personal" ? "#ccc" : "#fff",
-                  }}
-                >
-                  Personal Information
-                </button>
-                <button
-                  onClick={() => setActiveTab("medical")}
-                  style={{
-                    backgroundColor: activeTab === "medical" ? "#ccc" : "#fff",
-                  }}
-                >
-                  Medical History
-                </button>
-              </div>
-
-              {activeTab === "personal" && selectedPatientInfo && (
-                <div>
-                  <p><strong>Name:</strong> {selectedPatientInfo.firstName} {selectedPatientInfo.middleName} {selectedPatientInfo.lastName}</p>
-                  <p><strong>Birthday:</strong> {selectedPatientInfo.birthday}</p>
-                  <p><strong>Age:</strong> {selectedPatientInfo.age}</p>
-                  <p><strong>Address:</strong> {selectedPatientInfo.address}</p>
-                  <p><strong>Email:</strong> {selectedPatientInfo.email}</p>
-                  <p><strong>Civil Status:</strong> {selectedPatientInfo.civilStatus}</p>
-                  <p><strong>Occupation:</strong> {selectedPatientInfo.occupation}</p>
-                </div>
-              )}
-
-              {activeTab === "medical" && (
-                <MedicalHistory patientId={selectedPatientInfo?.uid} />
-              )}
-
-              <Modal isOpen={showTreatmentHistory} onRequestClose={handleTreatmentHistoryClose} style={{ content: { width: "80%", margin: "auto" } }}>
-                <h3>Treatment History for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
-                <TreatmentHistory appointments={patientRecords} handleViewInsuranceDetails={handleViewInsuranceDetails} />
-                <button onClick={handleTreatmentHistoryClose}>Close</button>
-              </Modal>
-
-              <Modal isOpen={showDentalChart} onRequestClose={handleDentalChartClose}>
-                <DentalChart uid={selectedPatientInfo?.uid} />
-                <button onClick={handleDentalChartClose}>Close</button>
-              </Modal>
+      {/* Main Content Area: header and content in a column */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        {/* Header Bar */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "#fff",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+          padding: "28px 32px 18px 32px",
+          borderBottom: "1px solid #f0eae2",
+          position: "sticky",
+          top: 0,
+          zIndex: 10
+        }}>
+          <span style={{ fontWeight: 700, fontSize: 32, color: "#3d342b", letterSpacing: 0.5 }}>Patient Records</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={handleSearch}
+              style={{
+                background: "transparent",
+                border: "none",
+                borderBottom: "2px solid #d6cfc2",
+                outline: "none",
+                fontSize: 18,
+                padding: "6px 32px 6px 8px",
+                color: "#7a6d5c",
+                width: 180,
+                marginRight: 8
+              }}
+            />
+            <svg width="22" height="22" fill="none" stroke="#bca77b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+        </div>
+        {/* Main Content Row (table and patient info) */}
+        <div style={{ display: "flex", gap: 16, justifyContent: "center", alignItems: "flex-start", padding: "15px 0 0 0" }}>
+          {/* Patient List Card */}
+          <div style={{
+            flex: 2,
+            minWidth: 0,
+            background: "#fff",
+            borderRadius: 24,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+            padding: "32px 32px 32px 32px",
+            marginLeft: 20,
+            marginRight: 0,
+            overflow: "hidden",
+            border: "1px solid #f0eae2"
+          }}>
+            <div style={{ width: '100%', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: 16 }}>
+                <thead>
+                  <tr style={{ background: '#fff' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#bca77b', borderBottom: '2px solid #e0e0e0' }}>Last Name <span style={{fontSize:12}}>⇅</span></th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#bca77b', borderBottom: '2px solid #e0e0e0' }}>First Name <span style={{fontSize:12}}>⇅</span></th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#bca77b', borderBottom: '2px solid #e0e0e0' }}>Middle Name <span style={{fontSize:12}}>⇅</span></th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#bca77b', borderBottom: '2px solid #e0e0e0' }}>Email Address <span style={{fontSize:12}}>⇅</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPatients.length === 0 ? (
+                    <tr><td colSpan={4} style={{ padding: '16px', color: '#888', textAlign: 'center' }}>No patients found.</td></tr>
+                  ) : (
+                    filteredPatients.map((patient) => {
+                      const isSelected = selectedPatient === patient.email;
+                      return (
+                        <tr
+                          key={patient.email}
+                          onClick={() => handlePatientClick(patient.email)}
+                          style={{
+                            cursor: 'pointer',
+                            background: isSelected ? '#393737' : '#fff',
+                            color: isSelected ? '#fff' : '#222',
+                            fontWeight: isSelected ? 600 : 500,
+                            borderRadius: isSelected ? 12 : 0,
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          <td style={{ padding: '16px', borderBottom: '1px solid #e0e0e0', borderTopLeftRadius: isSelected ? 12 : 0, borderBottomLeftRadius: isSelected ? 12 : 0 }}>{patient.lastName}</td>
+                          <td style={{ padding: '16px', borderBottom: '1px solid #e0e0e0' }}>{patient.firstName}</td>
+                          <td style={{ padding: '16px', borderBottom: '1px solid #e0e0e0' }}>{patient.middleName && patient.middleName !== "--" ? patient.middleName : "--"}</td>
+                          <td style={{ padding: '16px', borderBottom: '1px solid #e0e0e0', borderTopRightRadius: isSelected ? 12 : 0, borderBottomRightRadius: isSelected ? 12 : 0 }}>{patient.email}</td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <div>
-              {filteredPatients.length === 0 ? (
-                <p>No patients found.</p>
+          </div>
+          {/* Patient Details Card */}
+          <div style={{
+            flex: 1,
+            minWidth: 380,
+            maxWidth: 440,
+            padding: "0",
+            background: "transparent",
+            display: "flex",
+            justifyContent: "flex-start",
+            alignItems: "flex-start",
+            marginRight: 20
+          }}>
+            <div style={{
+              width: 420,
+              background: "#f9f6f2",
+              borderRadius: 22,
+              boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
+              padding: 32,
+              marginTop: 0,
+              border: '1px solid #ede7df',
+              minHeight: 420
+            }}>
+              {selectedPatient && selectedPatientInfo ? (
+                <>
+                  <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 18, color: '#3d342b' }}>Patient Information</div>
+                  <hr style={{ border: 'none', borderTop: '1px solid #e0dedb', margin: '18px 0' }} />
+                  <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 16, color: '#3d342b' }}>Details</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: 8, columnGap: 12, marginBottom: 24 }}>
+                    <div style={{ color: '#b0a89f', fontWeight: 500 }}>Name</div>
+                    <div style={{ color: '#3d342b', fontWeight: 500 }}>
+                      {selectedPatientInfo.firstName ? selectedPatientInfo.firstName : 'N/A'}{' '}
+                      {selectedPatientInfo.middleName && selectedPatientInfo.middleName !== '--' ? selectedPatientInfo.middleName + ' ' : selectedPatientInfo.middleName === '--' || !selectedPatientInfo.middleName ? '' : selectedPatientInfo.middleName + ' '}
+                      {selectedPatientInfo.lastName ? selectedPatientInfo.lastName : 'N/A'}
+                    </div>
+                    <div style={{ color: '#b0a89f', fontWeight: 500 }}>Birthdate</div>
+                    <div style={{ color: '#3d342b' }}>{selectedPatientInfo.birthday ? selectedPatientInfo.birthday : 'N/A'}</div>
+                    <div style={{ color: '#b0a89f', fontWeight: 500 }}>Age</div>
+                    <div style={{ color: '#3d342b' }}>{selectedPatientInfo.age ? selectedPatientInfo.age : 'N/A'}</div>
+                    <div style={{ color: '#b0a89f', fontWeight: 500 }}>Address</div>
+                    <div style={{ color: '#3d342b' }}>{selectedPatientInfo.address ? selectedPatientInfo.address : 'N/A'}</div>
+                    <div style={{ color: '#b0a89f', fontWeight: 500 }}>Email</div>
+                    <div style={{ color: '#3d342b' }}>{selectedPatientInfo.email ? selectedPatientInfo.email : 'N/A'}</div>
+                    <div style={{ color: '#b0a89f', fontWeight: 500 }}>Civil Status</div>
+                    <div style={{ color: '#3d342b' }}>{selectedPatientInfo.civilStatus ? selectedPatientInfo.civilStatus : 'N/A'}</div>
+                    <div style={{ color: '#b0a89f', fontWeight: 500 }}>Occupation</div>
+                    <div style={{ color: '#3d342b' }}>{selectedPatientInfo.occupation ? selectedPatientInfo.occupation : 'N/A'}</div>
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid #e0dedb', margin: '18px 0' }} />
+                  {/* Action Rows */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 600, fontSize: 19, color: '#3d342b', marginBottom: 18 }}>
+                    Treatment History
+                    <button onClick={() => setShowTreatmentHistory(true)} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>View</button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 600, fontSize: 19, color: '#3d342b', marginBottom: 18 }}>
+                    Medical History
+                    <button onClick={() => setActiveTab("medical")} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>View</button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 600, fontSize: 19, color: '#3d342b', marginBottom: 0 }}>
+                    Dental Chart
+                    <button onClick={() => setShowDentalChart(true)} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>View</button>
+                  </div>
+                  {/* Medical History Modal */}
+                  <Modal isOpen={activeTab === "medical"} onRequestClose={() => setActiveTab("personal")} style={{ content: { width: "60%", margin: "auto" } }}>
+                    <h3>Medical History for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
+                    <MedicalHistory patientId={selectedPatientInfo?.uid} />
+                    <button onClick={() => setActiveTab("personal")}>Close</button>
+                  </Modal>
+                  {/* Treatment History Modal */}
+                  <Modal isOpen={showTreatmentHistory} onRequestClose={handleTreatmentHistoryClose} style={{ content: { width: "80%", margin: "auto" } }}>
+                    <h3>Treatment History for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
+                    <TreatmentHistory appointments={patientRecords} handleViewInsuranceDetails={handleViewInsuranceDetails} />
+                    <ViewInsurance
+                      isOpen={showInsuranceForm}
+                      onClose={handleInsuranceClose}
+                      insuranceDetails={insuranceDetails}
+                    />
+                    <button onClick={handleTreatmentHistoryClose}>Close</button>
+                  </Modal>
+                  {/* Dental Chart Modal */}
+                  <Modal isOpen={showDentalChart} onRequestClose={handleDentalChartClose} style={{ content: { width: "60%", margin: "auto" } }}>
+                    <h3>Dental Chart for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
+                    <DentalChart uid={selectedPatientInfo?.uid} />
+                    <button onClick={handleDentalChartClose}>Close</button>
+                  </Modal>
+                </>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {filteredPatients.map((patient) => (
-                    <button
-                      key={patient.email}
-                      onClick={() => handlePatientClick(patient.email)}
-                      style={{
-                        padding: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "5px",
-                        background: "#f9f9f9",
-                        textAlign: "left",
-                      }}
-                    >
-                      {patient.email}
-                    </button>
-                  ))}
-                </div>
+                <div style={{ color: "#888", fontSize: 18, marginTop: 80 }}>Select a patient to view their information.</div>
               )}
             </div>
-          )}
-
-          {/* View Insurance Modal */}
-          <ViewInsurance
-            isOpen={showInsuranceForm}
-            onClose={handleInsuranceClose}
-            insuranceDetails={insuranceDetails}
-          />
+          </div>
         </div>
       </div>
     </div>

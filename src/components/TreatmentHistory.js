@@ -63,19 +63,36 @@ const TreatmentHistory = ({ appointments, handleViewInsuranceDetails }) => {
                   </p>
                   <p><strong>Services:</strong> {appointment.services.join(", ")}</p>
                   <p><strong>Bill:</strong> {appointment.bill}</p>
-                  <button
-                    onClick={() => handleViewInsuranceDetails(appointment)}
-                    style={{
-                      background: "blue",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                    }}
-                  >
-                    View Insurance Details
-                  </button>
+                  {appointment.insuranceDetails && typeof appointment.insuranceDetails === 'object' && Object.values(appointment.insuranceDetails).some(val => val && val !== "") ? (
+                    <button
+                      onClick={() => handleViewInsuranceDetails(appointment)}
+                      style={{
+                        background: "blue",
+                        color: "white",
+                        border: "none",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                      }}
+                    >
+                      View Insurance Details
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      style={{
+                        background: "#ccc",
+                        color: "#666",
+                        border: "none",
+                        padding: "5px 10px",
+                        fontSize: "12px",
+                        cursor: "not-allowed",
+                      }}
+                      title="No insurance linked for this appointment"
+                    >
+                      No Insurance Linked
+                    </button>
+                  )}
                 </div>
 
                 {/* Second Row: Dentist Remarks Below */}
