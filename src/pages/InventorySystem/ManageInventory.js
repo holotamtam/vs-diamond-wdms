@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getDatabase, ref, set, onValue, remove } from "firebase/database";
+import { getDatabase, ref, set, onValue, remove, get } from "firebase/database";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 
@@ -50,29 +50,23 @@ const ManageInventory = () => {
 
    // Fetch user details for sidebar profile (search all personnel types)
   useEffect(() => {
-    const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
-    let unsubscribes = [];
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        let found = false;
-        personnelTypes.forEach(type => {
-          const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
-          const unsub = onValue(userRef, (snapshot) => {
-            if (snapshot.exists() && !found) {
-              setUserDetails(snapshot.val());
-              found = true;
-              unsubscribes.forEach(u => u());
-            }
-          });
-          unsubscribes.push(() => unsub());
-        });
+  const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
+  const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      for (const type of personnelTypes) {
+        const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          setUserDetails(snapshot.val());
+          break;
+        }
       }
-    });
-    return () => {
-      unsubscribeAuth();
-      unsubscribes.forEach(u => u());
-    };
-  }, [auth]);
+    }
+  });
+  return () => {
+    authUnsubscribe();
+  };
+}, [auth]);
 
   // Handle form submission for adding or editing items
   const handleSubmit = () => {
@@ -181,13 +175,13 @@ const ManageInventory = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/inventory" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333', fontWeight: "bold" }}>
+              <Link to="/inventory" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#C7A76C', fontWeight: "bold" }}>
                 Inventory
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Revenue
+              <Link to="/analytics" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Analytics
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>

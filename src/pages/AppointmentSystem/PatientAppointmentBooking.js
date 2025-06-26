@@ -3,7 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { ref, set, onValue } from "firebase/database";
+import { ref, set, onValue, get } from "firebase/database";
 import Modal from "react-modal";
 import { Link, useNavigate } from "react-router-dom";
 import ServicesList from "../../components/ServicesList";
@@ -65,20 +65,19 @@ const PatientAppointmentBooking = () => {
 
   // Fetch user details for sidebar profile
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const usersRef = ref(db, "users/Patient");
-        onValue(usersRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const users = snapshot.val();
-            const userData = Object.values(users).find((u) => u.uid === user.uid);
-            if (userData) setUserDetails(userData);
-          }
-        });
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const usersRef = ref(db, "users/Patient");
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+        const userData = Object.values(users).find((u) => u.uid === user.uid);
+        if (userData) setUserDetails(userData);
       }
-    });
-    return () => unsubscribe();
-  }, []);
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
   // Fetch dentists from Firebase
   const fetchDentists = () => {

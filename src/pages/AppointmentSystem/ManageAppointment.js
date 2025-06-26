@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { db } from "../../backend/firebaseConfig";
 import Calendar from "react-calendar";
-import { ref, onValue, remove, update, push } from "firebase/database";
+import { ref, onValue, remove, update, push, get } from "firebase/database";
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
@@ -307,30 +307,23 @@ const ManageAppointment = () => {
 
    // Fetch user details for sidebar profile (search all personnel types)
     useEffect(() => {
-      const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
-      let unsubscribes = [];
-      const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          let found = false;
-          personnelTypes.forEach(type => {
-            const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
-            const unsub = onValue(userRef, (snapshot) => {
-              if (snapshot.exists() && !found) {
-                setUserDetails(snapshot.val());
-                found = true;
-                // Unsubscribe from other listeners
-                unsubscribes.forEach(u => u());
-              }
-            });
-            unsubscribes.push(() => unsub());
-          });
+  const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
+  const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      for (const type of personnelTypes) {
+        const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          setUserDetails(snapshot.val());
+          break;
         }
-      });
-      return () => {
-        unsubscribeAuth();
-        unsubscribes.forEach(u => u());
-      };
-    }, [auth]);
+      }
+    }
+  });
+  return () => {
+    unsubscribeAuth();
+  };
+}, [auth]);
 
   // Function to handle logout
   const handleLogout = () => {

@@ -8,7 +8,7 @@ import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 const formatCurrency = (amount) =>
   "₱" + (amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 0 });
 
-const ReportRevenue = () => {
+const Analytics = () => {
   // ...existing state...
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [allAppointments, setAllAppointments] = useState([]);
@@ -319,8 +319,8 @@ const getTotalRevenue = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#C7A76C', fontWeight: "bold" }}>
-                Revenue
+              <Link to="/analytics" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#C7A76C', fontWeight: "bold" }}>
+                Analytics
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
@@ -378,34 +378,49 @@ const getTotalRevenue = () => {
         </div>
       </div>
       {/* Main Content */}
-      <div style={{ flex: 1, padding: 40, background: "#FAF7F3" }}>
-        {/* Header */}
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 32, color: "#23201A" }}>
-          Analytics
-        </h1>
+    <div style={{ flex: 1, padding: 0, background: "#FAF7F3" }}>
+  {/* Header Bar */}
+  <div style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    background: "#fff",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+    padding: "28px 32px 18px 32px",
+    borderBottom: "1px solid #f0eae2",
+    position: "sticky",
+    top: 0,
+    zIndex: 10
+  }}>
+    <span style={{ fontSize: "24px", fontWeight: 700, color: "#23201A" }}>
+      Analytics
+    </span>
+  </div>
 
-        {/* Period Selection */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
-        {PERIOD_OPTIONS.map(opt => (
-          <button
-            key={opt.key}
-            onClick={() => setSelectedPeriod(opt.key)}
-            style={{
-              padding: "10px 28px",
-              borderRadius: 24,
-              border: "none",
-              fontWeight: 600,
-              fontSize: 16,
-              background: selectedPeriod === opt.key ? "#C7A76C" : "#fff",
-              color: selectedPeriod === opt.key ? "#fff" : "#23201A",
-              boxShadow: selectedPeriod === opt.key ? "0 2px 8px #c7a76c33" : "none",
-              cursor: "pointer"
-            }}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
+  {/* Main Content Container with padding */}
+  <div style={{ padding: 40 }}>
+    {/* Period Selection */}
+    <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
+      {PERIOD_OPTIONS.map(opt => (
+        <button
+          key={opt.key}
+          onClick={() => setSelectedPeriod(opt.key)}
+          style={{
+            padding: "10px 28px",
+            borderRadius: 24,
+            border: "none",
+            fontWeight: 600,
+            fontSize: 16,
+            background: selectedPeriod === opt.key ? "#C7A76C" : "#fff",
+            color: selectedPeriod === opt.key ? "#fff" : "#23201A",
+            boxShadow: selectedPeriod === opt.key ? "0 2px 8px #c7a76c33" : "none",
+            cursor: "pointer"
+          }}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
 
         {/* Summary Cards */}
         <div style={{ display: "flex", gap: 24, marginBottom: 32 }}>
@@ -544,7 +559,8 @@ const getTotalRevenue = () => {
         </div>
       </div>
     </div>
+    </div>
   );
 };
 
-export default ReportRevenue;
+export default Analytics;

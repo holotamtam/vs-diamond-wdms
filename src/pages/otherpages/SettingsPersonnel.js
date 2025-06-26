@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged, signOut, updatePassword } from "firebase/auth";
-import { ref, onValue, update } from "firebase/database";
+import { ref, get, update } from "firebase/database";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -33,22 +33,17 @@ const Settings = () => {
     return () => unsubscribe();
   }, []);
 
-  const fetchUserDetails = (uid) => {
-  // Try each personnel type until found
+  const fetchUserDetails = async (uid) => {
   const types = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
-  let found = false;
-  types.forEach(type => {
+  for (const type of types) {
     const userRef = ref(db, `users/Personnel/${type}/${uid}`);
-    onValue(userRef, (snapshot) => {
-      if (snapshot.exists() && !found) {
-        setUserDetails(snapshot.val());
-        setPersonnelType(type);
-        found = true;
-      }
-    }, (error) => {
-      // Handle error if needed
-    });
-  });
+    const snapshot = await get(userRef);
+    if (snapshot.exists()) {
+      setUserDetails(snapshot.val());
+      setPersonnelType(type);
+      break;
+    }
+  }
 };
 
    // Handle logout
@@ -121,8 +116,8 @@ const handleSave = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Revenue
+              <Link to="/analytics" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Analytics
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
@@ -131,7 +126,7 @@ const handleSave = () => {
               </Link>
             </li>
             <li style={{ marginBottom: "10px" }}>
-              <Link to="/settings-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333", fontWeight: "bold" }}>
+              <Link to="/settings-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#C7A76C", fontWeight: "bold" }}>
                 Settings
               </Link>
             </li>
@@ -235,18 +230,23 @@ const handleSave = () => {
                   </button>
                 )}
                 <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  style={{
-                    background: isEditing ? "#f44336" : "#007BFF",
-                    color: "white",
-                    border: "none",
-                    padding: "10px 20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                  }}
-                >
-                  {isEditing ? "Cancel" : "Edit Profile"}
-                </button>
+  onClick={() => {
+    if (isEditing) {
+      setEditedDetails({}); // Reset edits on cancel
+    }
+    setIsEditing(!isEditing);
+  }}
+  style={{
+    background: isEditing ? "#f44336" : "#007BFF",
+    color: "white",
+    border: "none",
+    padding: "10px 20px",
+    cursor: "pointer",
+    borderRadius: "5px",
+  }}
+>
+  {isEditing ? "Cancel" : "Edit Profile"}
+</button>
               </div>
 
               {/* Profile Picture */}
@@ -394,20 +394,26 @@ const handleSave = () => {
           <strong>Birthdate:</strong>
         </label>
         <input
-          type="date"
-          defaultValue={userDetails.birthDate || ""}
-          onChange={(e) => handleInputChange("birthDate", e.target.value)}
-          disabled={!isEditing} // Disable input if not editing
-          style={{
-            width: "100%", // Match column width
-            height: "35px", // Consistent height
-            padding: "5px",
-            border: "1px solid #ddd",
-            borderRadius: "5px",
-            background: isEditing ? "white" : "#f4f4f4",
-            fontSize: "14px", // Consistent font size
-          }}
-        />
+  type="date"
+  value={
+    isEditing
+      ? (editedDetails.birthDate !== undefined
+          ? editedDetails.birthDate
+          : userDetails.birthDate || "")
+      : userDetails.birthDate || ""
+  }
+  onChange={(e) => handleInputChange("birthDate", e.target.value)}
+  disabled={!isEditing}
+  style={{
+    width: "100%",
+    height: "35px",
+    padding: "5px",
+    border: "1px solid #ddd",
+    borderRadius: "5px",
+    background: isEditing ? "white" : "#f4f4f4",
+    fontSize: "14px",
+  }}
+/>
       </div>
     </div>
 

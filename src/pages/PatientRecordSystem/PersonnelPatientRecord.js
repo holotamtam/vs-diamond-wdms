@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../backend/firebaseConfig";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, get } from "firebase/database";
 import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 import Modal from "react-modal";
 import ViewInsurance from "../../components/ViewInsurance";
@@ -87,29 +87,23 @@ const PersonnelPatientRecord = () => {
 
   // Fetch user details for sidebar profile (search all personnel types)
   useEffect(() => {
-    const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
-    let unsubscribes = [];
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        let found = false;
-        personnelTypes.forEach(type => {
-          const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
-          const unsub = onValue(userRef, (snapshot) => {
-            if (snapshot.exists() && !found) {
-              setUserDetails(snapshot.val());
-              found = true;
-              unsubscribes.forEach(u => u());
-            }
-          });
-          unsubscribes.push(() => unsub());
-        });
+  const personnelTypes = ["DentistOwner", "AssociateDentist", "ClinicStaff"];
+  const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      for (const type of personnelTypes) {
+        const userRef = ref(db, `users/Personnel/${type}/${user.uid}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          setUserDetails(snapshot.val());
+          break;
+        }
       }
-    });
-    return () => {
-      unsubscribeAuth();
-      unsubscribes.forEach(u => u());
-    };
-  }, [auth]);
+    }
+  });
+  return () => {
+    authUnsubscribe();
+  };
+}, [auth]);
 
   // Function to handle patient selection
   const handlePatientClick = (email) => {
@@ -200,7 +194,7 @@ const PersonnelPatientRecord = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/patient-record" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333', fontWeight: "bold" }}>
+              <Link to="/patient-record" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#C7A76C', fontWeight: "bold" }}>
                 Patient Record
               </Link>
             </li>
@@ -210,8 +204,8 @@ const PersonnelPatientRecord = () => {
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Revenue
+              <Link to="/analytics" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+                Analytics
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
@@ -283,7 +277,7 @@ const PersonnelPatientRecord = () => {
           top: 0,
           zIndex: 10
         }}>
-          <span style={{ fontWeight: 700, fontSize: 32, color: "#3d342b", letterSpacing: 0.5 }}>Patient Records</span>
+          <span style={{ fontWeight: 700, fontSize: "24px", color: "#3d342b", letterSpacing: 0.5 }}>Patient Records</span>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <input
               type="text"

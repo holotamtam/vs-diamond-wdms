@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { db, auth } from "../../backend/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, get } from "firebase/database";
 import ViewInsurance from "../../components/ViewInsurance";
 
 const PatientRecord = () => {
@@ -33,21 +33,24 @@ const PatientRecord = () => {
   }, []);
 
   // Fetch user details
-  const fetchUserDetails = (uid) => {
-    const patientsRef = ref(db, "users/Patient");
-    onValue(patientsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const patients = snapshot.val();
-        let userData = null;
-        Object.values(patients).forEach((patient) => {
-          if (patient.uid === uid) {
-            userData = patient;
-          }
-        });
-        if (userData) setUserDetails(userData);
-      }
-    });
-  };
+  const fetchUserDetails = async (uid) => {
+  const patientsRef = ref(db, "users/Patient");
+  try {
+    const snapshot = await get(patientsRef);
+    if (snapshot.exists()) {
+      const patients = snapshot.val();
+      let userData = null;
+      Object.values(patients).forEach((patient) => {
+        if (patient.uid === uid) {
+          userData = patient;
+        }
+      });
+      if (userData) setUserDetails(userData);
+    }
+  } catch (error) {
+    console.error("Error fetching user details:", error.message);
+  }
+};
 
   // Fetch completed appointments
   const fetchCompletedAppointments = (uid) => {
@@ -154,7 +157,7 @@ function formatTime(minutes) {
               </Link>
             </li>
             <li style={{ marginBottom: "20px" }}>
-              <Link to="/treatment-history" style={{ textDecoration: "none", color: "#333", fontWeight: "bold" }}>
+              <Link to="/treatment-history" style={{ textDecoration: "none", color: "#C7A76C", fontWeight: "bold" }}>
                 Treatment History
               </Link>
             </li>
