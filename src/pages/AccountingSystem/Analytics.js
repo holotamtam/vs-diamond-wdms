@@ -390,7 +390,9 @@ const getTotalRevenue = () => {
     borderBottom: "1px solid #f0eae2",
     position: "sticky",
     top: 0,
-    zIndex: 10
+    zIndex: 10,
+    height: "35.333px",
+    flex: 1
   }}>
     <span style={{ fontSize: "24px", fontWeight: 700, color: "#23201A" }}>
       Analytics
@@ -406,7 +408,7 @@ const getTotalRevenue = () => {
           key={opt.key}
           onClick={() => setSelectedPeriod(opt.key)}
           style={{
-            padding: "10px 28px",
+            padding: "15px 28px",
             borderRadius: 24,
             border: "none",
             fontWeight: 600,

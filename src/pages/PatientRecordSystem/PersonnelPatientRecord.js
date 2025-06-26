@@ -275,7 +275,8 @@ const PersonnelPatientRecord = () => {
           borderBottom: "1px solid #f0eae2",
           position: "sticky",
           top: 0,
-          zIndex: 10
+          zIndex: 10,
+          height: "35.333px"
         }}>
           <span style={{ fontWeight: 700, fontSize: "24px", color: "#3d342b", letterSpacing: 0.5 }}>Patient Records</span>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
