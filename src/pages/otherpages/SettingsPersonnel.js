@@ -175,8 +175,26 @@ const handleSave = () => {
         </div>
       </div>
       {/* Main Content */}
-      <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
-        <h1 style={{ margin: 0, fontSize: "24px", color: "#333",  }}>Settings</h1>
+    <div style={{ flex: 1, padding: 0, background: "#FAF7F3" }}>
+      {/* Header Bar */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        background: "#fff",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        padding: "28px 32px 18px 32px",
+        borderBottom: "1px solid #f0eae2",
+        position: "sticky",
+        top: 0,
+        zIndex: 10
+      }}>
+        <span style={{ fontSize: "24px", fontWeight: 700, color: "#23201A" }}>
+          Settings
+        </span>
+      </div>
+      {/* Main Content Container with padding */}
+      <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
         {/* Tab Navigation */}
         <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
           <button
@@ -592,6 +610,7 @@ const handleSave = () => {
 )}
         </div>
       </div>
+    </div>
     </div>
   );
 };

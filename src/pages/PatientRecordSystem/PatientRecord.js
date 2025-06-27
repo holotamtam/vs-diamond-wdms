@@ -130,7 +130,7 @@ function formatTime(minutes) {
 }
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#f8f5ef" }}>
       {/* Sidebar */}
       <div
         style={{
@@ -211,30 +211,43 @@ function formatTime(minutes) {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column" }}>
-        {/* Title */}
-        <h1 style={{
-          margin: 0,
-          fontSize: "24px",
-          color: "#333",
-          marginBottom: "30px",
-          textAlign: "left"
-        }}>
-          Treatment History
-        </h1>
-        {/* Columns */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        {/* Header Bar */}
         <div style={{
           display: "flex",
-          gap: "40px",
-          alignItems: "flex-start",
-          width: "100%",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "#fff",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+          padding: "28px 32px 18px 32px",
+          borderBottom: "1px solid #f0eae2",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          height: "35.333px"
         }}>
-          {/* Left: List of Treatments */}
+          <span style={{ fontWeight: 700, fontSize: "24px", color: "#3d342b", letterSpacing: 0.5 }}>Treatment History</span>
+        </div>
+        {/* Main Content Row (table and patient info) */}
+        <div style={{
+          display: "flex",
+          gap: 16,
+          justifyContent: "center",
+          alignItems: "flex-start",
+          padding: "15px 0 0 0"
+        }}>
+           {/* Left: List of Treatments */}
           <div style={{
             flex: 2,
             minWidth: 0,
-            maxWidth: "100%",
+            background: "#fff",
+            borderRadius: 24,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+            padding: "32px 32px 32px 32px",
+            marginLeft: 20,
+            marginRight: 0,
+            overflow: "hidden",
+            border: "1px solid #f0eae2"
           }}>
             {sortedMonthKeys.length === 0 ? (
               <p style={{ textAlign: "center" }}>No treatment history found.</p>
@@ -252,80 +265,88 @@ function formatTime(minutes) {
                       {monthKey}
                     </h2>
                     <div>
-                      {groupedAppointments[monthKey]
+                    {groupedAppointments[monthKey]
   .sort((a, b) => new Date(b.date) - new Date(a.date))
-  .map((appt) => (
-    <div
-      key={appt.id}
-      style={{
-        border: "1px solid #e0e0e0",
-        borderRadius: "8px",
-        padding: "16px",
-        marginBottom: "16px",
-        background: selectedTreatment && selectedTreatment.id === appt.id ? "#e6f0ff" : "#fafbfc",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
-        cursor: "pointer",
-        transition: "background 0.2s",
-      }}
-      onClick={() => setSelectedTreatment(appt)}
-    >
-      <div style={{ fontWeight: "bold", fontSize: "16px", marginBottom: "8px" }}>
-        {appt.services || "Service"}
-      </div>
-      <div style={{ fontSize: "15px" }}>
-        <div>
-          <span style={{ fontWeight: 500 }}>Date:</span>{" "}
-          {appt.date ? new Date(appt.date).toLocaleDateString() : "N/A"}
+  .map((appt) => {
+    const isSelected = selectedTreatment === appt;
+    return (
+      <div
+        key={appt.id}
+        style={{
+          border: "1px solid #e0e0e0",
+          borderRadius: isSelected ? 12 : 8,
+          padding: "16px",
+          marginBottom: "16px",
+          background: isSelected ? "#393737" : "#fff",
+          color: isSelected ? "#fff" : "#222",
+          fontWeight: isSelected ? 600 : 500,
+          fontSize: "16px",
+          cursor: "pointer",
+          transition: "all 0.2s",
+          boxShadow: isSelected
+            ? "0 0 0 2px #393737"
+            : "0 1px 2px rgba(0,0,0,0.03)",
+          outline: isSelected ? "2px solid #393737" : "none",
+        }}
+        onClick={() => setSelectedTreatment(appt)}
+      >
+        <div style={{ fontWeight: 600, fontSize: "16px", marginBottom: "8px" }}>
+          {appt.services || "Service"}
         </div>
-        <div>
-          <span style={{ fontWeight: 500 }}>Time:</span>{" "}
-          {(() => {
-            // Prefer startTime/endTime, fallback to time/duration, else N/A
-            function parseTimeToMinutes(time) {
-              if (!time || typeof time !== "string" || !time.includes(":")) return null;
-              const [hourStr, minuteStr] = time.split(":");
-              const hour = parseInt(hourStr, 10);
-              const minute = parseInt(minuteStr, 10);
-              if (isNaN(hour) || isNaN(minute)) return null;
-              return hour * 60 + minute;
-            }
-            function formatTime(minutes) {
-              if (minutes === null || minutes === undefined) return "";
-              const hour = Math.floor(minutes / 60);
-              const minute = minutes % 60;
-              const ampm = hour >= 12 ? "PM" : "AM";
-              const formattedHour = hour % 12 || 12;
-              const formattedMinute = minute < 10 ? `0${minute}` : minute;
-              return `${formattedHour}:${formattedMinute} ${ampm}`;
-            }
-            if (appt.startTime) {
-              const start = parseTimeToMinutes(appt.startTime);
-              const end = appt.endTime
-                ? parseTimeToMinutes(appt.endTime)
-                : appt.duration
+        <div style={{ fontSize: "15px" }}>
+          <div>
+            <span style={{ fontWeight: 500 }}>Date:</span>{" "}
+            {appt.date ? new Date(appt.date).toLocaleDateString() : "N/A"}
+          </div>
+          <div>
+            <span style={{ fontWeight: 500 }}>Time:</span>{" "}
+            {(() => {
+              function parseTimeToMinutes(time) {
+                if (!time || typeof time !== "string" || !time.includes(":")) return null;
+                const [hourStr, minuteStr] = time.split(":");
+                const hour = parseInt(hourStr, 10);
+                const minute = parseInt(minuteStr, 10);
+                if (isNaN(hour) || isNaN(minute)) return null;
+                return hour * 60 + minute;
+              }
+              function formatTime(minutes) {
+                if (minutes === null || minutes === undefined) return "";
+                const hour = Math.floor(minutes / 60);
+                const minute = minutes % 60;
+                const ampm = hour >= 12 ? "PM" : "AM";
+                const formattedHour = hour % 12 || 12;
+                const formattedMinute = minute < 10 ? `0${minute}` : minute;
+                return `${formattedHour}:${formattedMinute} ${ampm}`;
+              }
+              if (appt.startTime) {
+                const start = parseTimeToMinutes(appt.startTime);
+                const end = appt.endTime
+                  ? parseTimeToMinutes(appt.endTime)
+                  : appt.duration
+                    ? start + Number(appt.duration)
+                    : null;
+                return end !== null
+                  ? `${formatTime(start)} - ${formatTime(end)}`
+                  : formatTime(start);
+              } else if (appt.time) {
+                const start = parseTimeToMinutes(appt.time);
+                const end = appt.duration
                   ? start + Number(appt.duration)
                   : null;
-              return end !== null
-                ? `${formatTime(start)} - ${formatTime(end)}`
-                : formatTime(start);
-            } else if (appt.time) {
-              const start = parseTimeToMinutes(appt.time);
-              const end = appt.duration
-                ? start + Number(appt.duration)
-                : null;
-              return end !== null
-                ? `${formatTime(start)} - ${formatTime(end)}`
-                : start !== null
-                  ? formatTime(start)
-                  : "N/A";
-            } else {
-              return "N/A";
-            }
-          })()}
+                return end !== null
+                  ? `${formatTime(start)} - ${formatTime(end)}`
+                  : start !== null
+                    ? formatTime(start)
+                    : "N/A";
+              } else {
+                return "N/A";
+              }
+            })()}
+          </div>
         </div>
       </div>
-    </div>
-  ))}
+    );
+  })}
                     </div>
                   </div>
                 ))}
@@ -336,16 +357,25 @@ function formatTime(minutes) {
           {/* Right: Treatment Details */}
           <div style={{
             flex: 1,
-            minWidth: 320,
-            maxWidth: 500,
-            background: "#fff",
-            border: "1px solid #e0e0e0",
-            borderRadius: "10px",
-            padding: "24px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-            height: "fit-content",
-            alignSelf: "flex-start"
+            minWidth: 380,
+            maxWidth: 440,
+            padding: "0",
+            background: "transparent",
+            display: "flex",
+            justifyContent: "flex-start",
+            alignItems: "flex-start",
+            marginRight: 20
           }}>
+            <div style={{
+              width: 420,
+              background: "#f9f6f2",
+              borderRadius: 22,
+              boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
+              padding: 32,
+              marginTop: 0,
+              border: '1px solid #ede7df',
+              minHeight: 420
+            }}>
             {selectedTreatment ? (
               <>
                 {/* Remarks */}
@@ -470,6 +500,7 @@ function formatTime(minutes) {
               </div>
             )}
           </div>
+        </div>
         </div>
 
         <ViewInsurance
