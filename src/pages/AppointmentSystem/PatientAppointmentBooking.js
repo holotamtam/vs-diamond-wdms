@@ -375,6 +375,7 @@ const PatientAppointmentBooking = () => {
       </div>
 
       {/* Main Content */}
+      
       <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "row", gap: "40px" }}>
         {/* Left column: appointment form and summary */}
         <div style={{ width: "350px", minWidth: "300px" }}>

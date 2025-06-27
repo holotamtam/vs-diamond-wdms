@@ -208,7 +208,7 @@ useEffect(() => {
   };
 
   return (
-  <div style={{ display: "flex", height: "100vh" }}>
+  <div style={{ display: "flex", height: "100vh", background: "#f8f5ef" }}>
     {/* Sidebar */}
      <div
       style={{
@@ -291,12 +291,23 @@ useEffect(() => {
     </div>
 
     {/* Main Content */}
-    <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
-      {/* Top Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        {/* Dashboard Title */}
-        <h1 style={{ margin: 0, fontSize: "24px", color: "#333" }}>Dashboard</h1>
-
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Header Bar */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        background: "#fff",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        padding: "28px 32px 18px 32px",
+        borderBottom: "1px solid #f0eae2",
+        position: "sticky",
+        top: 0,
+        zIndex: 10
+      }}>
+        <span style={{ fontSize: "24px", fontWeight: 700, color: "#23201A" }}>
+          Dashboard
+        </span>
         {/* Right Side Buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           {/* Notification Icon */}
@@ -500,7 +511,7 @@ useEffect(() => {
             </button>
           </div>
         </Modal>
-
+       <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
       {/* Top Widgets */}
       <div style={{ display: "flex", gap: "20px" }}>
         <div
@@ -636,6 +647,7 @@ useEffect(() => {
         </div>
       </div>
     </div>
+  </div>
   </div>
 );
 };
