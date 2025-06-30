@@ -8,6 +8,7 @@ import DentalChart from "../../components/DentalChart";
 import TreatmentHistory from "../../components/TreatmentHistory";
 import MedicalHistory from "../../components/MedicalHistory";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+import useUserRole from "../../hooks/useUserRole";
 
 Modal.setAppElement("#root");
 
@@ -33,7 +34,8 @@ const PersonnelPatientRecord = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const auth = getAuth();
-  const userRole = location.state?.userRole;
+  const userRoleFromHook = useUserRole();
+  const userRole = location.state?.userRole || userRoleFromHook || "DentistOwner";
 
   // Fetch all appointments
   useEffect(() => {
@@ -189,32 +191,34 @@ const PersonnelPatientRecord = () => {
         <div>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ marginBottom: "10px" }}>
-              <Link to="/dashboard-dentistowner" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333"}}>
+              <Link to={userRole === "ClinicStaff" ? "/dashboard-clinicstaff" : userRole === "AssociateDentist" ? "/dashboard-associatedentist" : "/dashboard-dentistowner"} state={{ userRole: userRole }} style={{ textDecoration: "none", color: "#333"}}>
                 Dashboard
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/patient-record" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#C7A76C', fontWeight: "bold" }}>
+              <Link to="/patient-record" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#C7A76C', fontWeight: "bold" }}>
                 Patient Record
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/inventory" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+              <Link to="/inventory" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
                 Inventory
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/analytics" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+              <Link to="/analytics" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
                 Analytics
               </Link>
             </li>
-            <li style={{ marginBottom: '10px' }}>
-              <Link to="/manage-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Manage Personnel
-              </Link>
-            </li>
+            {userRole === "DentistOwner" && (
+              <li style={{ marginBottom: '10px' }}>
+                <Link to="/manage-personnel" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
+                  Manage Personnel
+                </Link>
+              </li>
+            )}
             <li style={{ marginBottom: "10px" }}>
-              <Link to="/settings-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333" }}>
+              <Link to="/settings-personnel" state={{ userRole: userRole }} style={{ textDecoration: "none", color: "#333" }}>
                 Settings
               </Link>
             </li>

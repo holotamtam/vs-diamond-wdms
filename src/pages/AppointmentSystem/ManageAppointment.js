@@ -27,7 +27,7 @@ const ManageAppointment = () => {
   const auth = getAuth();
 
   // Retrieve userRole from navigation state
-  const userRole = location.state?.userRole || "";
+  const userRole = location.state?.userRole || "DentistOwner";
 
   const addNotification = async (uid, message) => {
     const notificationsRef = ref(db, `notifications/${uid}`);
@@ -366,32 +366,34 @@ const ManageAppointment = () => {
         <div>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ marginBottom: "10px" }}>
-              <Link to="/dashboard-dentistowner" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333"}}>
+              <Link to={userRole === "ClinicStaff" ? "/dashboard-clinicstaff" : userRole === "AssociateDentist" ? "/dashboard-associatedentist" : "/dashboard-dentistowner"} state={{ userRole: userRole }} style={{ textDecoration: "none", color: "#333"}}>
                 Dashboard
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/patient-record" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+              <Link to="/patient-record" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
                 Patient Record
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/inventory" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
+              <Link to="/inventory" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
                 Inventory
               </Link>
             </li>
             <li style={{ marginBottom: '10px' }}>
-              <Link to="/revenue" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Revenue
+              <Link to="/analytics" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
+                Analytics
               </Link>
             </li>
-            <li style={{ marginBottom: '10px' }}>
-              <Link to="/manage-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Manage Personnel
-              </Link>
-            </li>
+            {userRole === "DentistOwner" && (
+              <li style={{ marginBottom: '10px' }}>
+                <Link to="/manage-personnel" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
+                  Manage Personnel
+                </Link>
+              </li>
+            )}
             <li style={{ marginBottom: "10px" }}>
-              <Link to="/settings-personnel" state={{ userRole: "DentistOwner" }} style={{ textDecoration: "none", color: "#333"}}>
+              <Link to="/settings-personnel" state={{ userRole: userRole }} style={{ textDecoration: "none", color: "#333"}}>
                 Settings
               </Link>
             </li>
