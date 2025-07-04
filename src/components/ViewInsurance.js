@@ -10,6 +10,7 @@ const ViewInsurance = ({ isOpen, onClose, insuranceDetails }) => {
       style={{
         overlay: {
           backgroundColor: "rgba(0, 0, 0, 0.5)",
+          zIndex: 2000
         },
         content: {
           top: '50%',

@@ -402,7 +402,8 @@ const ManageInventory = () => {
             {isModalOpen && (
               <div style={{
                 position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
-                backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center"
+                backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+                zIndex: 1001
               }}>
                 <div style={{
                   backgroundColor: "#fff", padding: "20px", borderRadius: "8px", minWidth: "300px"

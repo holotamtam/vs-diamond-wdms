@@ -2,7 +2,7 @@ import React, { useState, useEffect, use } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../backend/firebaseConfig";
-import { ref, onValue, get } from "firebase/database";
+import { ref, onValue, get, update } from "firebase/database";
 import {
   markNotificationAsRead,
   deleteNotification,
@@ -20,9 +20,18 @@ const DashboardPatient = () => {
   const [nextAppointment, setNextAppointment] = useState(null);
   const [latestAppointments, setLatestAppointments] = useState([]);
   const [userDetails, setUserDetails] = useState(null);
-   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-
-
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [hasInsurance, setHasInsurance] = useState(false);
+  const [insuranceDetails, setInsuranceDetails] = useState({
+    provider: '',
+    policyNumber: '',
+    groupNumber: '',
+    relationship: ''
+  });
+  const [insuranceMessage, setInsuranceMessage] = useState("");
 
   // Fetch notifications and treatment history
   useEffect(() => {
@@ -69,6 +78,20 @@ useEffect(() => {
   return () => unsubscribe();
 }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownOpen && !event.target.closest('.dropdown-container')) {
+        setDropdownOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
   // Function to fetch completed appointments (treatment history)
   const fetchCompletedAppointments = (uid) => {
     const appointmentsRef = ref(db, "appointments");
@@ -104,13 +127,19 @@ useEffect(() => {
       if (snapshot.exists()) {
         const allAppointments = snapshot.val();
         let upcomingAppointments = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
 
         // Iterate through all appointments and filter upcoming ones
         Object.entries(allAppointments).forEach(([date, dateAppointments]) => {
           Object.entries(dateAppointments).forEach(([id, appointment]) => {
+            const appointmentDate = new Date(appointment.date);
+            appointmentDate.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+            
             if (
               appointment.uid === uid &&
-              (appointment.status === "Pending" || appointment.status === "Approved")
+              (appointment.status === "Pending" || appointment.status === "Approved") &&
+              appointmentDate >= today // Only include future or today's appointments
             ) {
               upcomingAppointments.push({ id, ...appointment });
             }
@@ -144,13 +173,19 @@ useEffect(() => {
       if (snapshot.exists()) {
         const allAppointments = snapshot.val();
         let upcomingAppointments = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
 
         // Filter and collect appointments for the user
         Object.entries(allAppointments).forEach(([date, dateAppointments]) => {
           Object.entries(dateAppointments).forEach(([id, appointment]) => {
+            const appointmentDate = new Date(appointment.date);
+            appointmentDate.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+            
             if (
               appointment.uid === uid &&
-              (appointment.status === "Pending" || appointment.status === "Approved")
+              (appointment.status === "Pending" || appointment.status === "Approved") &&
+              appointmentDate >= today // Only include future or today's appointments
             ) {
               upcomingAppointments.push({ id, ...appointment });
             }
@@ -205,6 +240,47 @@ useEffect(() => {
     const minute = parseInt(minuteStr, 10);
     if (isNaN(hour) || isNaN(minute)) return null;
     return hour * 60 + minute;
+  };
+
+  // Function to handle appointment actions
+  const handleAppointmentAction = (appointment, action) => {
+    setSelectedAppointment(appointment);
+    setDropdownOpen(null);
+    
+    if (action === 'view') {
+      setHasInsurance(false);
+      setInsuranceDetails(appointment.insuranceDetails || {
+        name: '', companyName: '', contactNumber: '', hmoCard: '', hmoAccountNumber: '', validGovernmentID: '', validGovernmentIDNumber: '', birthdate: '', relationship: ''
+      });
+      setShowAppointmentModal(true);
+    }
+  };
+
+  // Function to update appointment insurance information
+  const updateAppointmentInsurance = async (updatedDetails) => {
+    if (!selectedAppointment) return;
+
+    try {
+      const appointmentRef = ref(db, `appointments/${selectedAppointment.date}/${selectedAppointment.id}`);
+      const updateData = {
+        hasInsurance: updatedDetails?.hasInsurance || false,
+        insuranceDetails: updatedDetails?.hasInsurance ? updatedDetails : null
+      };
+
+      await update(appointmentRef, updateData);
+      // Do NOT close the modal or clear selectedAppointment here
+      // setShowAppointmentModal(false);
+      // setSelectedAppointment(null);
+      // UI update and message logic remains
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      alert('Failed to update appointment. Please try again.');
+    }
+  };
+
+  // Function to toggle dropdown
+  const toggleDropdown = (appointmentId) => {
+    setDropdownOpen(dropdownOpen === appointmentId ? null : appointmentId);
   };
 
   return (
@@ -511,6 +587,353 @@ useEffect(() => {
             </button>
           </div>
         </Modal>
+
+        {/* Appointment Details Modal */}
+        <Modal
+          isOpen={showAppointmentModal}
+          onRequestClose={() => setShowAppointmentModal(false)}
+          contentLabel="Appointment Details"
+          style={{
+            overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)", zIndex: 3000 },
+            content: {
+              top: "50%",
+              left: "50%",
+              right: "auto",
+              bottom: "auto",
+              marginRight: "-50%",
+              transform: "translate(-50%, -50%)",
+              padding: "20px",
+              borderRadius: "10px",
+              width: "500px",
+              maxHeight: "80vh",
+              overflowY: "auto",
+              zIndex: 3001
+            },
+          }}
+        >
+          {selectedAppointment && (
+            <div>
+              <h2 style={{ marginTop: 0, marginBottom: "20px" }}>Appointment Details</h2>
+              
+              {/* Appointment Details */}
+              <div style={{ marginBottom: "20px" }}>
+                <p><strong>Date:</strong> {selectedAppointment.date}</p>
+                <p><strong>Time:</strong> {selectedAppointment.time ? formatTime(parseTimeToMinutes(selectedAppointment.time)) : "N/A"}</p>
+                <p><strong>Services:</strong> {selectedAppointment.services.join(", ")}</p>
+                <p><strong>Dentist:</strong> {selectedAppointment.dentist}</p>
+                <p><strong>Status:</strong> {selectedAppointment.status}</p>
+                <p><strong>Duration:</strong> {selectedAppointment.duration ? `${selectedAppointment.duration} minutes` : "N/A"}</p>
+              </div>
+
+              {/* Insurance Information */}
+              <div style={{ marginBottom: "20px" }}>
+                <h3>Insurance Information</h3>
+                {selectedAppointment.hasInsurance ? (
+                  // Show existing insurance details with option to modify
+                  <div>
+                    <div style={{ marginBottom: "15px" }}>
+                      <p><strong>Name:</strong> {selectedAppointment.insuranceDetails?.name || "Not specified"}</p>
+                      <p><strong>Company Name:</strong> {selectedAppointment.insuranceDetails?.companyName || "Not specified"}</p>
+                      <p><strong>Contact Number:</strong> {selectedAppointment.insuranceDetails?.contactNumber || "Not specified"}</p>
+                      <p><strong>HMO Card:</strong> {selectedAppointment.insuranceDetails?.hmoCard || "Not specified"}</p>
+                      <p><strong>HMO Account Number:</strong> {selectedAppointment.insuranceDetails?.hmoAccountNumber || "Not specified"}</p>
+                      <p><strong>Valid Government ID:</strong> {selectedAppointment.insuranceDetails?.validGovernmentID || "Not specified"}</p>
+                      <p><strong>Valid Government ID Number:</strong> {selectedAppointment.insuranceDetails?.validGovernmentIDNumber || "Not specified"}</p>
+                      <p><strong>Birthdate:</strong> {selectedAppointment.insuranceDetails?.birthdate || "Not specified"}</p>
+                      <p><strong>Relationship:</strong> {selectedAppointment.insuranceDetails?.relationship || "Not specified"}</p>
+                    </div>
+                    {!hasInsurance && (
+                      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                        <button
+                          onClick={() => {
+                            setHasInsurance(true);
+                            setInsuranceDetails(selectedAppointment.insuranceDetails || {
+                              name: '', companyName: '', contactNumber: '', hmoCard: '', hmoAccountNumber: '', validGovernmentID: '', validGovernmentIDNumber: '', birthdate: '', relationship: ''
+                            });
+                          }}
+                          style={{
+                            background: "#007BFF",
+                            color: "white",
+                            border: "none",
+                            padding: "8px 16px",
+                            borderRadius: "4px",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Modify Insurance
+                        </button>
+                        <button
+                          onClick={async () => {
+                            // Remove insurance from database
+                            const appointmentRef = ref(db, `appointments/${selectedAppointment.date}/${selectedAppointment.id}`);
+                            await update(appointmentRef, { hasInsurance: false, insuranceDetails: null });
+                            setHasInsurance(false);
+                            setInsuranceDetails({
+                              name: '', companyName: '', contactNumber: '', hmoCard: '', hmoAccountNumber: '', validGovernmentID: '', validGovernmentIDNumber: '', birthdate: '', relationship: ''
+                            });
+                            setSelectedAppointment(prev => ({ ...prev, hasInsurance: false, insuranceDetails: null }));
+                            setInsuranceMessage("Insurance Removed Successfully");
+                            setTimeout(() => setInsuranceMessage(""), 3000);
+                          }}
+                          style={{
+                            background: "#dc3545",
+                            color: "white",
+                            border: "none",
+                            padding: "8px 16px",
+                            borderRadius: "4px",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Remove Insurance
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Show "No Insurance Provided" with option to add (inline)
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                    <span style={{ color: "#666", fontStyle: "italic" }}>
+                      No Insurance Provided
+                    </span>
+                    {!hasInsurance && (
+                      <button
+                        onClick={() => setHasInsurance(true)}
+                        style={{
+                          background: "#28a745",
+                          color: "white",
+                          border: "none",
+                          padding: "8px 16px",
+                          borderRadius: "4px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Add Insurance
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {insuranceMessage && (
+                  <div style={{ color: '#28a745', marginTop: '10px', fontWeight: 'bold' }}>{insuranceMessage}</div>
+                )}
+
+                {/* Insurance Form (shown only when adding or modifying) */}
+                {hasInsurance && (
+                  <form onSubmit={e => {
+                    e.preventDefault();
+                    updateAppointmentInsurance({ ...insuranceDetails, hasInsurance: true });
+                    setHasInsurance(false);
+                    setSelectedAppointment(prev => ({ ...prev, hasInsurance: true, insuranceDetails: { ...insuranceDetails } }));
+                    setInsuranceMessage("Insurance Added Successfully");
+                    setTimeout(() => setInsuranceMessage(""), 3000);
+                  }} style={{
+                    border: "1px solid #ddd",
+                    borderRadius: "5px",
+                    padding: "15px",
+                    backgroundColor: "#f9f9f9",
+                    marginTop: "10px"
+                  }}>
+                    <div style={{ marginBottom: "10px" }}>
+                      <input
+                        placeholder="Name"
+                        type="text"
+                        required
+                        value={insuranceDetails.name || ''}
+                        maxLength="100"
+                        onChange={e => {
+                          const value = e.target.value;
+                          if (/^[a-zA-Z\s]*$/.test(value)) {
+                            setInsuranceDetails(details => ({ ...details, name: value.replace(/\b\w/g, char => char.toUpperCase()) }));
+                          }
+                        }}
+                        style={{ width: '100%', padding: '8px', marginBottom: '8px' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                      <input
+                        placeholder="Company Name"
+                        type="text"
+                        required
+                        value={insuranceDetails.companyName || ''}
+                        maxLength="50"
+                        onChange={e => {
+                          const value = e.target.value;
+                          const regex = /^[a-zA-Z0-9\s\-&.',]+$/;
+                          if (value === '' || regex.test(value)) {
+                            setInsuranceDetails(details => ({ ...details, companyName: value }));
+                          }
+                        }}
+                        style={{ flex: 1, padding: '8px' }}
+                      />
+                      <input
+                        placeholder="Contact Number"
+                        type="text"
+                        required
+                        maxLength="11"
+                        value={insuranceDetails.contactNumber || ''}
+                        onChange={e => {
+                          const value = e.target.value;
+                          if (/^\d*$/.test(value)) {
+                            setInsuranceDetails(details => ({ ...details, contactNumber: value }));
+                          }
+                        }}
+                        style={{ flex: 1, padding: '8px' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                      <input
+                        placeholder="HMO Card"
+                        type="text"
+                        required
+                        value={insuranceDetails.hmoCard || ''}
+                        maxLength="15"
+                        onChange={e => {
+                          const value = e.target.value;
+                          const regex = /^[a-zA-Z0-9-]+$/;
+                          if (value === '' || regex.test(value)) {
+                            setInsuranceDetails(details => ({ ...details, hmoCard: value }));
+                          }
+                        }}
+                        style={{ flex: 1, padding: '8px' }}
+                      />
+                      <input
+                        placeholder="HMO Account Number"
+                        type="text"
+                        required
+                        value={insuranceDetails.hmoAccountNumber || ''}
+                        maxLength="15"
+                        onChange={e => {
+                          const value = e.target.value;
+                          const regex = /^[0-9-]+$/;
+                          if (value === '' || regex.test(value)) {
+                            setInsuranceDetails(details => ({ ...details, hmoAccountNumber: value }));
+                          }
+                        }}
+                        style={{ flex: 1, padding: '8px' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                      <input
+                        placeholder="Valid Government ID"
+                        type="text"
+                        required
+                        value={insuranceDetails.validGovernmentID || ''}
+                        onChange={e => {
+                          const value = e.target.value;
+                          const regex = /^[a-zA-Z0-9-\s]+$/;
+                          if (value === '' || regex.test(value)) {
+                            setInsuranceDetails(details => ({ ...details, validGovernmentID: value }));
+                          }
+                        }}
+                        style={{ flex: 1, padding: '8px' }}
+                      />
+                      <input
+                        placeholder="Valid Government ID Number"
+                        type="text"
+                        required
+                        value={insuranceDetails.validGovernmentIDNumber || ''}
+                        onChange={e => {
+                          const value = e.target.value;
+                          const regex = /^[a-zA-Z0-9-\s]+$/;
+                          if (value === '' || regex.test(value)) {
+                            setInsuranceDetails(details => ({ ...details, validGovernmentIDNumber: value }));
+                          }
+                        }}
+                        style={{ flex: 1, padding: '8px' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', alignItems: 'center' }}>
+                      <input
+                        placeholder="Birthdate"
+                        type="date"
+                        required
+                        value={insuranceDetails.birthdate || ''}
+                        onChange={e => setInsuranceDetails(details => ({ ...details, birthdate: e.target.value }))}
+                        style={{ flex: 1, padding: '8px' }}
+                      />
+                      <select
+                        required
+                        value={insuranceDetails.relationship || ''}
+                        onChange={e => setInsuranceDetails(details => ({ ...details, relationship: e.target.value }))}
+                        style={{ flex: 1, padding: '8px' }}
+                      >
+                        <option value="">Select</option>
+                        <option value="Principal">Principal</option>
+                        <option value="Dependent">Dependent</option>
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHasInsurance(false);
+                          setInsuranceDetails(selectedAppointment.insuranceDetails || {
+                            name: '', companyName: '', contactNumber: '', hmoCard: '', hmoAccountNumber: '', validGovernmentID: '', validGovernmentIDNumber: '', birthdate: '', relationship: ''
+                          });
+                        }}
+                        style={{
+                          background: "#6c757d",
+                          color: "white",
+                          border: "none",
+                          padding: "8px 16px",
+                          borderRadius: "4px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        style={{
+                          background: "#007BFF",
+                          color: "white",
+                          border: "none",
+                          padding: "8px 16px",
+                          borderRadius: "4px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => setShowAppointmentModal(false)}
+                  style={{
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                {hasInsurance && (
+                  <button
+                    onClick={() => updateAppointmentInsurance()}
+                    style={{
+                      background: "#007BFF",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Save
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal>
        <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
       {/* Top Widgets */}
       <div style={{ display: "flex", gap: "20px" }}>
@@ -522,10 +945,59 @@ useEffect(() => {
             borderRadius: "5px",
             padding: "20px",
             textAlign: "center",
+            position: "relative",
           }}
         >
           <h3>Next Appointment</h3>
           <p>{nextAppointment ? nextAppointment.date : "No upcoming appointments"}</p>
+          {nextAppointment && (
+            <div style={{ position: "absolute", top: "10px", right: "10px" }} className="dropdown-container">
+              <button
+                onClick={() => toggleDropdown(`next-${nextAppointment.id}`)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  padding: "5px",
+                }}
+              >
+                ⋮
+              </button>
+              {dropdownOpen === `next-${nextAppointment.id}` && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    right: "0",
+                    background: "white",
+                    border: "1px solid #ddd",
+                    borderRadius: "5px",
+                    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
+                    zIndex: 1000,
+                    minWidth: "150px",
+                  }}
+                >
+                  <button
+                    onClick={() => handleAppointmentAction(nextAppointment, 'view')}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      fontSize: "14px",
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = "#f5f5f5"}
+                    onMouseLeave={(e) => e.target.style.background = "transparent"}
+                  >
+                    View Details
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div
           style={{
@@ -587,12 +1059,63 @@ useEffect(() => {
           border: "1px solid #ddd",
           borderRadius: "5px",
           background: "#f9f9f9",
+          position: "relative",
         }}
       >
-        <p><strong>{appointment.services.join(", ")}</strong></p>
-        <p>{appointment.dentist}</p>
-        <p>{appointment.date}</p>
-        <p>{startMinutes !== null ? formatTime(startMinutes) : "N/A"}</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ flex: 1 }}>
+            <p><strong>{appointment.services.join(", ")}</strong></p>
+            <p>{appointment.dentist}</p>
+            <p>{appointment.date}</p>
+            <p>{startMinutes !== null ? formatTime(startMinutes) : "N/A"}</p>
+          </div>
+          <div style={{ position: "relative" }} className="dropdown-container">
+            <button
+              onClick={() => toggleDropdown(appointment.id)}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "18px",
+                padding: "5px",
+              }}
+            >
+              ⋮
+            </button>
+            {dropdownOpen === appointment.id && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: "0",
+                  background: "white",
+                  border: "1px solid #ddd",
+                  borderRadius: "5px",
+                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
+                  zIndex: 1000,
+                  minWidth: "150px",
+                }}
+              >
+                <button
+                  onClick={() => handleAppointmentAction(appointment, 'view')}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontSize: "14px",
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = "#f5f5f5"}
+                  onMouseLeave={(e) => e.target.style.background = "transparent"}
+                >
+                  View Details
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </li>
     );
   })}

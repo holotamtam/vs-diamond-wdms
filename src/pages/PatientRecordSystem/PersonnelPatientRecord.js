@@ -9,6 +9,7 @@ import TreatmentHistory from "../../components/TreatmentHistory";
 import MedicalHistory from "../../components/MedicalHistory";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import useUserRole from "../../hooks/useUserRole";
+import PersonnelTreatmentHistoryModal from '../../components/PersonnelTreatmentHistoryModal';
 
 Modal.setAppElement("#root");
 
@@ -148,6 +149,7 @@ const PersonnelPatientRecord = () => {
   const handleViewInsuranceDetails = (appointment) => {
     setInsuranceDetails(appointment.insuranceDetails);
     setShowInsuranceForm(true);
+    setShowTreatmentHistory(false);
   };
 
 
@@ -155,6 +157,7 @@ const PersonnelPatientRecord = () => {
   const handleInsuranceClose = () => {
     setShowInsuranceForm(false);
     setInsuranceDetails(null);
+    setShowTreatmentHistory(true);
   };
 
   // Function to close the treatment history modal
@@ -172,6 +175,11 @@ const PersonnelPatientRecord = () => {
     signOut(auth).then(() => {
       navigate("/", { replace: true });
     });
+  };
+
+  // Handler to update remarks in patientRecords when saved in modal
+  const handleRemarksSaved = ({ id, date, remarks }) => {
+    setPatientRecords((prev) => prev.map(appt => (appt.id === id && appt.date === date) ? { ...appt, remarks } : appt));
   };
 
   return (
@@ -422,24 +430,37 @@ const PersonnelPatientRecord = () => {
                     <button onClick={() => setShowDentalChart(true)} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 18px', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>View</button>
                   </div>
                   {/* Medical History Modal */}
-                  <Modal isOpen={activeTab === "medical"} onRequestClose={() => setActiveTab("personal")} style={{ content: { width: "60%", margin: "auto" } }}>
+                  <Modal isOpen={activeTab === "medical"} onRequestClose={() => setActiveTab("personal")}
+                    style={{ overlay: { zIndex: 1001 }, content: { width: "60%", margin: "auto" } }}>
                     <h3>Medical History for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
                     <MedicalHistory patientId={selectedPatientInfo?.uid} />
                     <button onClick={() => setActiveTab("personal")}>Close</button>
                   </Modal>
                   {/* Treatment History Modal */}
-                  <Modal isOpen={showTreatmentHistory} onRequestClose={handleTreatmentHistoryClose} style={{ content: { width: "80%", margin: "auto" } }}>
-                    <h3>Treatment History for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
-                    <TreatmentHistory appointments={patientRecords} handleViewInsuranceDetails={handleViewInsuranceDetails} />
-                    <ViewInsurance
-                      isOpen={showInsuranceForm}
-                      onClose={handleInsuranceClose}
-                      insuranceDetails={insuranceDetails}
+                  <Modal isOpen={showTreatmentHistory} onRequestClose={handleTreatmentHistoryClose}
+                    style={{ 
+                      overlay: { zIndex: 1001 }, 
+                      content: { 
+                        width: "80%", 
+                        margin: "24px auto", 
+                        position: 'relative', 
+                        minHeight: 800, 
+                        maxHeight: 'calc(100vh - 48px)',
+                        overflow: 'visible'
+                      } 
+                    }}>
+                    <PersonnelTreatmentHistoryModal
+                      appointments={patientRecords}
+                      onClose={handleTreatmentHistoryClose}
+                      handleViewInsuranceDetails={handleViewInsuranceDetails}
+                      patientName={`${selectedPatientName.firstName} ${selectedPatientName.middleName} ${selectedPatientName.lastName}`}
+                      patientUid={selectedPatientInfo?.uid}
+                      onRemarksSaved={handleRemarksSaved}
                     />
-                    <button onClick={handleTreatmentHistoryClose}>Close</button>
                   </Modal>
                   {/* Dental Chart Modal */}
-                  <Modal isOpen={showDentalChart} onRequestClose={handleDentalChartClose} style={{ content: { width: "60%", margin: "auto" } }}>
+                  <Modal isOpen={showDentalChart} onRequestClose={handleDentalChartClose}
+                    style={{ overlay: { zIndex: 1001 }, content: { width: "60%", margin: "auto" } }}>
                     <h3>Dental Chart for {selectedPatientName.firstName} {selectedPatientName.middleName} {selectedPatientName.lastName}</h3>
                     <DentalChart uid={selectedPatientInfo?.uid} />
                     <button onClick={handleDentalChartClose}>Close</button>
@@ -452,6 +473,12 @@ const PersonnelPatientRecord = () => {
           </div>
         </div>
       </div>
+      {/* Render ViewInsurance modal at the top level, not nested */}
+      <ViewInsurance
+        isOpen={showInsuranceForm}
+        onClose={handleInsuranceClose}
+        insuranceDetails={insuranceDetails}
+      />
     </div>
   );
 };
