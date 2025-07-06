@@ -1,0 +1,194 @@
+.mh-container {
+  max-width: 1000px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 24px 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.mh-container h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.3rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 4px;
+}
+
+.mh-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  background: #fafbfc;
+}
+
+.mh-table th, .mh-table td {
+  border: 1px solid #e0e0e0;
+  padding: 8px 6px;
+  text-align: left;
+  font-size: 0.98rem;
+}
+
+.mh-table th {
+  background: #f3f6fa;
+  font-weight: 600;
+}
+
+.mh-table input[type="text"],
+.mh-table input[type="date"],
+.mh-table select {
+  width: 95%;
+  padding: 4px 6px;
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
+  font-size: 0.97rem;
+  background: #fff;
+}
+
+.mh-table input[type="radio"] {
+  transform: scale(1.2);
+  margin: 0 4px;
+}
+
+.mh-section {
+  margin: 18px 0 10px 0;
+}
+
+.mh-section label {
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.mh-section input[type="text"],
+.mh-section textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-top: 2px;
+  background: #fff;
+}
+
+.mh-section textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.mh-section-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.mh-section-row > div {
+  flex: 1;
+}
+
+.mh-save-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 6px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  margin-top: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mh-save-btn:hover {
+  background: #125ea2;
+}
+
+.mh-table button {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin-left: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.mh-table > tbody > tr > td > button[type="button"]:last-child {
+  background: #43a047;
+  margin-left: 8px;
+}
+
+@media (max-width: 800px) {
+  .mh-container {
+    padding: 12px 2px;
+  }
+  .mh-section-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .mh-table th, .mh-table td {
+    font-size: 0.93rem;
+    padding: 6px 2px;
+  }
+}
+
+.mh-health-table {
+  max-height: 350px;
+  overflow-y: auto;
+  display: block;
+}
+
+.mh-med-menu-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.mh-med-menu-icon {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.15s;
+  margin-left: 2px;
+}
+.mh-med-menu-icon:hover, .mh-med-menu-icon:focus {
+  background: #e3e3e3;
+  outline: none;
+}
+
+.mh-med-menu-dropdown {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  z-index: 20;
+  min-width: 150px;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mh-med-menu-dropdown button {
+  background: none !important;
+  color: #222;
+  border: none;
+  text-align: left;
+  padding: 8px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mh-med-menu-dropdown > button:hover:enabled {
+  background: #ededed !important;
+  color: #222;
+}
+.mh-med-menu-dropdown button:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+} 
