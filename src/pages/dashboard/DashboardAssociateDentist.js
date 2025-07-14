@@ -93,11 +93,7 @@ const DashboardAssociateDentist = () => {
               </Link>
             </li>
 
-            <li style={{ marginBottom: '10px' }}>
-              <Link to="/analytics" state={{ userRole: "AssociateDentist" }} style={{ textDecoration: 'none', color: '#333' }}>
-                Analytics
-              </Link>
-            </li>
+
             <li style={{ marginBottom: "10px" }}>
               <Link to="/settings-personnel" state={{ userRole: "AssociateDentist" }} style={{ textDecoration: "none", color: "#333" }}>
                 Settings

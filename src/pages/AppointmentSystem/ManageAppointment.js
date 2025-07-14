@@ -380,11 +380,13 @@ const ManageAppointment = () => {
                 Inventory
               </Link>
             </li>
-            <li style={{ marginBottom: '10px' }}>
-              <Link to="/analytics" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
-                Analytics
-              </Link>
-            </li>
+            {userRole === "DentistOwner" && (
+              <li style={{ marginBottom: '10px' }}>
+                <Link to="/analytics" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>
+                  Analytics
+                </Link>
+              </li>
+            )}
             {userRole === "DentistOwner" && (
               <li style={{ marginBottom: '10px' }}>
                 <Link to="/manage-personnel" state={{ userRole: userRole }} style={{ textDecoration: 'none', color: '#333' }}>

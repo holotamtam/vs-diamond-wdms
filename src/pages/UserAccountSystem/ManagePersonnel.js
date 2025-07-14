@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getDatabase, ref, get, remove, set } from "firebase/database";
+import { getDatabase, ref, get, remove, set, push } from "firebase/database";
 import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 import app from "../../backend/firebaseConfig";
 import { onValue, ref as dbRef } from "firebase/database";
@@ -17,6 +17,11 @@ const ManagePersonnel = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [editingPerson, setEditingPerson] = useState(null);
     const [editValue, setEditValue] = useState("");
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newStaffType, setNewStaffType] = useState("ClinicStaff");
+    const [newStaffEmail, setNewStaffEmail] = useState("");
+    const [newStaffPassword, setNewStaffPassword] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const navigate = useNavigate();
     const auth = getAuth(app);
@@ -252,6 +257,40 @@ const ManagePersonnel = () => {
         setEditValue("");
     };
 
+    // Add Staff/Personnel modal submit handler
+    const handleAddPersonnel = async (e) => {
+        e.preventDefault();
+        if (!newStaffEmail || !newStaffPassword) {
+            alert("Please provide both email/mobile and password.");
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const db = getDatabase(app);
+            // Format date as MM/DD/YYYY HH:mm
+            const now = new Date();
+            const pad = (n) => n.toString().padStart(2, '0');
+            const formattedDate = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            // Save under 'pendingPersonnel' with a generated key
+            const newRef = push(ref(db, `pendingPersonnel`));
+            await set(newRef, {
+                email: newStaffEmail,
+                password: newStaffPassword,
+                type: newStaffType,
+                createdAt: formattedDate,
+                status: "pending"
+            });
+            alert("Staff/Personnel added successfully! Share the credentials with the staff for first-time login.");
+            setShowAddModal(false);
+            setNewStaffType("ClinicStaff");
+            setNewStaffEmail("");
+            setNewStaffPassword("");
+        } catch (error) {
+            alert("Failed to add personnel: " + error.message);
+        }
+        setIsSubmitting(false);
+    };
+
     return (
         <div style={{ display: "flex", height: "100vh", background: "#fcf7f1" }}>
             {/* Sidebar */}
@@ -359,12 +398,39 @@ const ManagePersonnel = () => {
                     marginBottom: 32
                 }}>
                     <span style={{ fontWeight: 700, fontSize: "24px", color: "#3d342b", letterSpacing: 0.5 }}>Personnel Management</span>
-                    <div style={{ display: "flex", gap: 12 }}>
-                        <Link to="/sign-up-clinicstaff"><button style={{ background: '#C7A76C', color: 'white', border: 'none', borderRadius: 20, padding: '10px 18px', fontWeight: 500, cursor: 'pointer' }}>Add Clinic Staff</button></Link>
-                        <Link to="/sign-up-dentistowner"><button style={{ background: '#C7A76C', color: 'white', border: 'none', borderRadius: 20, padding: '10px 18px', fontWeight: 500, cursor: 'pointer' }}>Add Dentist Owner</button></Link>
-                        <Link to="/sign-up-associatedentist"><button style={{ background: '#C7A76C', color: 'white', border: 'none', borderRadius: 20, padding: '10px 18px', fontWeight: 500, cursor: 'pointer' }}>Add Associate Dentist</button></Link>
+                    <div>
+                        <button
+                            style={{ background: '#C7A76C', color: 'white', border: 'none', borderRadius: 20, padding: '10px 24px', fontWeight: 500, cursor: 'pointer', fontSize: 16 }}
+                            onClick={() => setShowAddModal(true)}
+                        >
+                            Add Staff/Personnel
+                        </button>
                     </div>
                 </div>
+                {/* Add Staff/Personnel Modal */}
+                {showAddModal && (
+                    <div style={{
+                        position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999
+                    }}>
+                        <div style={{ background: "#fff", borderRadius: 16, padding: 36, minWidth: 400, position: "relative" }}>
+                            <button onClick={() => setShowAddModal(false)} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "1px solid #ccc", borderRadius: "50%", width: 32, height: 32, fontSize: 18, cursor: "pointer" }}>×</button>
+                            <h2 style={{ textAlign: "center", marginBottom: 24 }}>Add Personnel</h2>
+                            <form onSubmit={handleAddPersonnel} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                                <label style={{ fontWeight: 500 }}>Staff Type</label>
+                                <select value={newStaffType} onChange={e => setNewStaffType(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #C7A76C', fontSize: 16 }}>
+                                    <option value="ClinicStaff">Clinic Staff</option>
+                                    <option value="AssociateDentist">Associate Dentist</option>
+                                    <option value="DentistOwner">Dentist Owner</option>
+                                </select>
+                                <label style={{ fontWeight: 500 }}>Email/Mobile Number</label>
+                                <input type="text" value={newStaffEmail} onChange={e => setNewStaffEmail(e.target.value)} style={{ padding: 10, borderRadius: 6, border: '1px solid #C7A76C', fontSize: 16 }} />
+                                <label style={{ fontWeight: 500 }}>Password</label>
+                                <input type="text" value={newStaffPassword} onChange={e => setNewStaffPassword(e.target.value)} style={{ padding: 10, borderRadius: 6, border: '1px solid #C7A76C', fontSize: 16 }} />
+                                <button type="submit" disabled={isSubmitting} style={{ background: '#C7A76C', color: 'white', border: 'none', borderRadius: 20, padding: '12px 0', fontWeight: 600, fontSize: 17, marginTop: 18, cursor: 'pointer' }}>{isSubmitting ? 'Submitting...' : 'Submit'}</button>
+                            </form>
+                        </div>
+                    </div>
+                )}
                 {/* Main Content Padding Wrapper */}
                 <div style={{ padding: "0 36px", overflow: "hidden" }}>
                     {/* Summary Cards */}

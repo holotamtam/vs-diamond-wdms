@@ -433,19 +433,6 @@ function formatTime(minutes) {
 </div>
 <hr style={{ border: "none", borderBottom: "1px solid #eee", margin: "0 0 32px 0" }} />
 
-{/* Invoice */}
-<div style={{ marginBottom: "32px" }}>
-  <span style={{ fontWeight: "bold", fontSize: "19px", color: "#333", display: "block", marginBottom: "15px" }}>Invoice</span>
-  <div>
-    <div style={{ marginBottom: "10px" }}>
-      <span style={{ fontWeight: "bold" }}>Bill:</span> {selectedTreatment.bill ? `₱${selectedTreatment.bill}` : "N/A"}
-    </div>
-    <div style={{ marginBottom: "10px" }}>
-      <span style={{ fontWeight: "bold" }}>Payment Method:</span> {selectedTreatment.paymentMethod || "N/A"}
-    </div>
-  </div>
-</div>
-<hr style={{ border: "none", borderBottom: "1px solid #eee", margin: "0 0 32px 0" }} />
 {/* Images (always visible for now) */}
 <div style={{ marginBottom: "32px" }}>
   <span style={{ fontWeight: "bold", fontSize: "19px", color: "#333", display: "block", marginBottom: "15px" }}>Images</span>

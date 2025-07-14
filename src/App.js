@@ -32,7 +32,6 @@ import NoPage from './pages/NoPage/NoPage';
 
 // Import User Account System Pages
 import SignIn from './pages/UserAccountSystem/SignIn'; // READ
-import SignUp from './pages/UserAccountSystem/SignUp'; 
 import SignUpPatient from './pages/UserAccountSystem/SignUpPatient'; // WRITE
 import SignUpDentistOwner from './pages/UserAccountSystem/SignUpDentistOwner'; // WRITE
 import SignUpAssociateDentist from './pages/UserAccountSystem/SignUpAssociateDentist'; // WRITE
@@ -73,7 +72,6 @@ function App() {
 
           {/* User Account System Pages */}
           <Route path="/sign-in" element={<SignIn />} /> {/* READ */}
-          <Route path="/sign-up" element={<SignUp/>} /> {/* WRITE */}
           <Route path="/sign-up-patient" element={<SignUpPatient />} /> {/* WRITE */}
           <Route path="/sign-up-dentistowner" element={<SignUpDentistOwner />} /> {/* WRITE */}
           <Route path="/sign-up-associatedentist" element={<SignUpAssociateDentist />} /> {/* WRITE */}

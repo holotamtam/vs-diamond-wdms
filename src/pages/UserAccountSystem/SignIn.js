@@ -85,7 +85,37 @@ const SignIn = () => {
       }
     } catch (error) {
       console.error("Error signing in:", error);
-      alert(`Error signing in (${error.code}): ${error.message}`);
+      // If normal sign-in fails, check pendingPersonnel
+      try {
+        const db = getDatabase(app);
+        const pendingRef = ref(db, 'pendingPersonnel');
+        const snapshot = await get(pendingRef);
+        if (snapshot.exists()) {
+          const pendingList = snapshot.val();
+          // Find a pending personnel with matching email and password
+          const match = Object.entries(pendingList).find(
+            ([, val]) => val.email === trimmedEmail && val.password === password && val.status === "pending"
+          );
+          if (match) {
+            const [, val] = match;
+            // Redirect to the correct signup page based on type
+            let signupRoute = val.type === "ClinicStaff"
+              ? "/sign-up-clinicstaff"
+              : val.type === "AssociateDentist"
+              ? "/sign-up-associatedentist"
+              : val.type === "DentistOwner"
+              ? "/sign-up-dentistowner"
+              : "/sign-up";
+            // Pass email and type via navigation state
+            navigate(signupRoute, { state: { pendingEmail: trimmedEmail, pendingType: val.type, pendingKey: match[0] } });
+            return;
+          }
+        }
+        // If not found in pendingPersonnel, show error
+        alert(`Error signing in (${error.code}): ${error.message}`);
+      } catch (pendingError) {
+        alert(`Error signing in (${error.code}): ${error.message}`);
+      }
     }
   };
 
@@ -207,23 +237,22 @@ const SignIn = () => {
           <span style={{ color: "#555", fontSize: "15px", marginRight: 8 }}>
             Don't have an account?
           </span>
-          <Link to="/sign-up">
-            <button
-              style={{
-                background: "#fff",
-                color: "#C29E38",
-                border: "2px solid #C29E38",
-                padding: "8px 24px",
-                borderRadius: "999px",
-                fontWeight: "bold",
-                fontSize: "15px",
-                cursor: "pointer",
-                marginLeft: 8,
-              }}
-            >
-              Sign Up
-            </button>
-          </Link>
+          <button
+            onClick={() => navigate('/sign-up-patient')}
+            style={{
+              background: "#fff",
+              color: "#C29E38",
+              border: "2px solid #C29E38",
+              padding: "8px 24px",
+              borderRadius: "999px",
+              fontWeight: "bold",
+              fontSize: "15px",
+              cursor: "pointer",
+              marginLeft: 8,
+            }}
+          >
+            Sign Up
+          </button>
         </div>
       </div>
     </div>
