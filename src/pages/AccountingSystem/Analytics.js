@@ -6,14 +6,15 @@ import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 import useUserRole from "../../hooks/useUserRole";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+
 
 // Utility: format currency
 const formatCurrency = (amount) =>
   "₱" + (amount || 0).toLocaleString("en-PH", { minimumFractionDigits: 0 });
 
-const WEEKDAYS = ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const PIE_COLORS = ["#C7A76C", "#8884d8", "#82ca9d", "#ffc658", "#ff8042"];
+const WEEKDAYS = ["Sunday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const PIE_COLORS = ["#C7A76C", "#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#a4de6c"];
 
 const Analytics = () => {
   const [todayAppointments, setTodayAppointments] = useState([]);
@@ -65,95 +66,96 @@ const Analytics = () => {
 
   // Fetch appointments and build revenue trend
   useEffect(() => {
-    const now = new Date();
-    const formattedToday = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-      .toISOString()
-      .split("T")[0];
+  const now = new Date();
+  const formattedToday = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .split("T")[0];
 
-    // Fetch today's appointments
-    const todayRef = ref(db, `appointments/${formattedToday}`);
-    onValue(todayRef, (snapshot) => {
-      const data = snapshot.val();
-      const list = [];
-      if (data) {
-        Object.values(data).forEach((appt) => {
-          list.push(appt);
-        });
-      }
-      setTodayAppointments(list);
-    });
+  // Fetch today's appointments
+  const todayRef = ref(db, `appointments/${formattedToday}`);
+  onValue(todayRef, (snapshot) => {
+    const data = snapshot.val();
+    const list = [];
+    if (data) {
+      Object.values(data).forEach((appt) => {
+        list.push(appt);
+      });
+    }
+    setTodayAppointments(list);
+  });
 
-    // Fetch all appointments for the past month (for week/month calculations)
-    const appointmentsRef = ref(db, "appointments");
-    onValue(appointmentsRef, (snapshot) => {
-      const data = snapshot.val();
-      const list = [];
-      const monthsSet = new Set();
-      const trend = [];
-      if (data) {
-        Object.entries(data).forEach(([dateKey, dateGroup]) => {
-          // For available months dropdown
-          const [year, month] = dateKey.split("-");
-          if (year && month) {
-            monthsSet.add(`${year}-${month}`);
-          }
+  // Fetch all appointments for the past month (for week/month calculations)
+  const appointmentsRef = ref(db, "appointments");
+  onValue(appointmentsRef, (snapshot) => {
+    const data = snapshot.val();
+    const list = [];
+    const monthsSet = new Set();
+    const trend = [];
+    if (data) {
+      Object.entries(data).forEach(([dateKey, dateGroup]) => {
+        // For available months dropdown
+        const [year, month] = dateKey.split("-");
+        if (year && month) {
+          monthsSet.add(`${year}-${month}`);
+        }
 
-          // For week/month calculations
-          const dateObj = new Date(dateKey);
-          const now = new Date();
-          const monthAgo = new Date(now);
-          monthAgo.setMonth(now.getMonth() - 1);
-          if (dateObj >= monthAgo && dateObj <= now) {
-            Object.values(dateGroup).forEach((appt) => {
-              list.push({ ...appt, _dateKey: dateKey });
-            });
-          }
-
-          // Revenue trend: sum revenue for each day
-          let dailyRevenue = 0;
+        // For week/month calculations
+        const dateObj = new Date(dateKey);
+        const now = new Date();
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(now.getMonth() - 1);
+        if (dateObj >= monthAgo && dateObj <= now) {
           Object.values(dateGroup).forEach((appt) => {
-            if (appt.status === "Completed" && appt.totalFee) {
-              dailyRevenue += Number(appt.totalFee) || 0;
+            list.push({ ...appt, _dateKey: dateKey });
+          });
+        }
+
+        // Revenue trend: sum revenue for each day
+        let dailyRevenue = 0;
+        Object.values(dateGroup).forEach((appt) => {
+          if (appt.status === "Completed") {
+            // Use bill/totalBill if present, fallback to totalFee
+            if (appt.totalBill !== undefined) dailyRevenue += Number(appt.totalBill) || 0;
+            else if (appt.bill !== undefined) dailyRevenue += Number(appt.bill) || 0;
+            else if (appt.totalFee) dailyRevenue += Number(appt.totalFee) || 0;
+          }
+        });
+        trend.push({
+          date: dateKey,
+          revenue: dailyRevenue,
+        });
+      });
+    }
+    setAllAppointments(list);
+
+    // Set available months for dropdown (sorted, latest first)
+    setAvailableMonths(Array.from(monthsSet).sort((a, b) => b.localeCompare(a)));
+
+    // Revenue trend sorted by date (include all days, even if revenue is 0)
+    setRevenueTrend(
+      trend.sort((a, b) => new Date(a.date) - new Date(b.date))
+    );
+
+    // Pending appointments within the next 30 days
+    const pendingList = [];
+    if (data) {
+      Object.entries(data).forEach(([dateKey, dateGroup]) => {
+        const dateObj = new Date(dateKey);
+        const now = new Date();
+        const thirtyDaysLater = new Date(now);
+        thirtyDaysLater.setDate(now.getDate() + 30);
+        if (dateObj >= now && dateObj <= thirtyDaysLater) {
+          Object.values(dateGroup).forEach((appt) => {
+            if (appt.status === "Pending") {
+              pendingList.push(appt);
             }
           });
-          trend.push({
-            date: dateKey,
-            revenue: dailyRevenue,
-          });
-        });
-      }
-      setAllAppointments(list);
-
-      // Set available months for dropdown (sorted, latest first)
-      setAvailableMonths(Array.from(monthsSet).sort((a, b) => b.localeCompare(a)));
-
-      // Revenue trend sorted by date
-      setRevenueTrend(
-        trend
-          .filter((d) => d.revenue > 0)
-          .sort((a, b) => new Date(a.date) - new Date(b.date))
-      );
-
-      // Pending appointments within the next 30 days
-      const pendingList = [];
-      if (data) {
-        Object.entries(data).forEach(([dateKey, dateGroup]) => {
-          const dateObj = new Date(dateKey);
-          const now = new Date();
-          const thirtyDaysLater = new Date(now);
-          thirtyDaysLater.setDate(now.getDate() + 30);
-          if (dateObj >= now && dateObj <= thirtyDaysLater) {
-            Object.values(dateGroup).forEach((appt) => {
-              if (appt.status === "Pending") {
-                pendingList.push(appt);
-              }
-            });
-          }
-        });
-      }
-      setPendingThirtyDayCount(pendingList.length);
-    });
-  }, []);
+        }
+      });
+    }
+    setPendingThirtyDayCount(pendingList.length);
+  });
+}, []);
 
   // Fetch user details for sidebar profile (search all personnel types)
   useEffect(() => {
@@ -175,74 +177,181 @@ const Analytics = () => {
     };
   }, [auth]);
 
+  // Helper: Get last 4 Saturdays for the selected month
+const getMonthSaturdays = (trend, selectedMonth) => {
+  // selectedMonth format: "YYYY-MM"
+  const saturdays = trend.filter(item => {
+    const dateObj = new Date(item.date);
+    const monthStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+    return dateObj.getDay() === 6 && monthStr === selectedMonth;
+  });
+  // Get last 4 (latest first)
+  return saturdays.slice(-4).map(item => ({
+    ...item,
+    label: new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  }));
+};
+
+const getSaturdaysInRange = (trend, startDate, endDate) => {
+  return trend
+    .filter(item => {
+      const dateObj = new Date(item.date);
+      return dateObj.getDay() === 6 && dateObj >= startDate && dateObj <= endDate;
+    })
+    .map(item => ({
+      ...item,
+      label: new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      revenue: item.revenue
+    }));
+};
+
+  // Helper: Get last 4 Saturdays from revenueTrend
+const getLastFourSaturdays = (trend) => {
+  const saturdays = [];
+  for (let i = trend.length - 1; i >= 0 && saturdays.length < 4; i--) {
+    const date = new Date(trend[i].date);
+    if (date.getDay() === 6) { // Saturday
+      saturdays.unshift(trend[i]);
+    }
+  }
+  // If not enough, fill with most recent days
+  if (saturdays.length < 4) {
+    const needed = 4 - saturdays.length;
+    const extras = trend.slice(-needed);
+    saturdays.unshift(...extras);
+  }
+  return saturdays;
+};
+
+const saturdaysTrend = getLastFourSaturdays(revenueTrend).map(item => ({
+  ...item,
+  label: new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+}));
+
+// Helper: Get last 7 days (Tue-Sun) for "week"
+const getWeekTrend = (trend) => {
+  const now = new Date();
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - (6 - i));
+    weekDays.push(d.toISOString().split("T")[0]);
+  }
+  // Map trend data to these dates
+  return weekDays.map(dateStr => {
+    const found = trend.find(t => t.date === dateStr);
+    return {
+      date: dateStr,
+      label: new Date(dateStr).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
+      revenue: found ? found.revenue : 0
+    };
+  });
+};
+
+// Prepare chart data based on selectedPeriod
+let chartData = [];
+if (selectedPeriod === "week") {
+  chartData = getWeekTrend(revenueTrend);
+} else if (selectedPeriod === "month" && selectedMonth) {
+  // Show all Saturdays in the selected month
+  const [year, month] = selectedMonth.split("-");
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0); // last day of month
+  chartData = getSaturdaysInRange(revenueTrend, startDate, endDate);
+} else if (selectedPeriod === "6months") {
+  // Show all Saturdays in the last 6 months
+  const now = new Date();
+  const sixMonthsAgo = new Date(now);
+  sixMonthsAgo.setMonth(now.getMonth() - 6);
+  chartData = getSaturdaysInRange(revenueTrend, sixMonthsAgo, now);
+} else {
+  chartData = getLastFourSaturdays(revenueTrend).map(item => ({
+    ...item,
+    label: new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    revenue: item.revenue
+  }));
+}
+
+
   // Centralized filtered appointments for all widgets
   const getFilteredAppointments = () => {
-    const now = new Date();
-    const weekAgo = new Date(now);
-    weekAgo.setDate(now.getDate() - 6);
-    const monthAgo = new Date(now);
-    monthAgo.setMonth(now.getMonth() - 1);
-    const sixMonthsAgo = new Date(now);
-    sixMonthsAgo.setMonth(now.getMonth() - 6);
-    const yearAgo = new Date(now);
-    yearAgo.setFullYear(now.getFullYear() - 1);
+  const now = new Date();
+  const weekAgo = new Date(now);
+  weekAgo.setDate(now.getDate() - 6);
+  const monthAgo = new Date(now);
+  monthAgo.setMonth(now.getMonth() - 1);
+  const sixMonthsAgo = new Date(now);
+  sixMonthsAgo.setMonth(now.getMonth() - 6);
+  const yearAgo = new Date(now);
+  yearAgo.setFullYear(now.getFullYear() - 1);
 
-    if (selectedPeriod === "today") {
-      return todayAppointments.filter((appt) => appt.status === "Completed");
-    } else if (selectedPeriod === "week") {
-      return allAppointments.filter((appt) => {
-        if (appt.status === "Completed" && appt._dateKey) {
-          const apptDate = new Date(appt._dateKey);
-          return apptDate >= weekAgo && apptDate <= now;
-        }
-        return false;
-      });
-    } else if (selectedPeriod === "month") {
-      return allAppointments.filter((appt) => {
-        if (appt.status === "Completed" && appt._dateKey) {
-          const apptDate = new Date(appt._dateKey);
-          return apptDate >= monthAgo && apptDate <= now;
-        }
-        return false;
-      });
-    } else if (selectedPeriod === "6months") {
-      return allAppointments.filter((appt) => {
-        if (appt.status === "Completed" && appt._dateKey) {
-          const apptDate = new Date(appt._dateKey);
-          return apptDate >= sixMonthsAgo && apptDate <= now;
-        }
-        return false;
-      });
-    } else if (selectedPeriod === "year") {
-      return allAppointments.filter((appt) => {
-        if (appt.status === "Completed" && appt._dateKey) {
-          const apptDate = new Date(appt._dateKey);
-          return apptDate >= yearAgo && apptDate <= now;
-        }
-        return false;
-      });
-    } else if (selectedPeriod === "all") {
-      return allAppointments.filter((appt) => appt.status === "Completed");
-    } else if (selectedPeriod === "custom" && customDate) {
-      const formattedDate = customDate.toISOString().split("T")[0];
-      return allAppointments.filter((appt) => appt._dateKey === formattedDate && appt.status === "Completed");
-    }
-    return [];
-  };
+  if (selectedPeriod === "today") {
+    return todayAppointments.filter((appt) => appt.status === "Completed");
+  } else if (selectedPeriod === "week") {
+    return allAppointments.filter((appt) => {
+      if (appt.status === "Completed" && appt._dateKey) {
+        const apptDate = new Date(appt._dateKey);
+        return apptDate >= weekAgo && apptDate <= now;
+      }
+      return false;
+    });
+  } else if (selectedPeriod === "month") {
+    return allAppointments.filter((appt) => {
+      if (appt.status === "Completed" && appt._dateKey) {
+        const apptDate = new Date(appt._dateKey);
+        return apptDate >= monthAgo && apptDate <= now;
+      }
+      return false;
+    });
+  } else if (selectedPeriod === "6months") {
+    return allAppointments.filter((appt) => {
+      if (appt.status === "Completed" && appt._dateKey) {
+        const apptDate = new Date(appt._dateKey);
+        return apptDate >= sixMonthsAgo && apptDate <= now;
+      }
+      return false;
+    });
+  } else if (selectedPeriod === "year") {
+    return allAppointments.filter((appt) => {
+      if (appt.status === "Completed" && appt._dateKey) {
+        const apptDate = new Date(appt._dateKey);
+        return apptDate >= yearAgo && apptDate <= now;
+      }
+      return false;
+    });
+  } else if (selectedPeriod === "all") {
+    return allAppointments.filter((appt) => appt.status === "Completed");
+  } else if (selectedPeriod === "custom" && customDate) {
+    const formattedDate = customDate.toISOString().split("T")[0];
+    return allAppointments.filter((appt) => appt._dateKey === formattedDate && appt.status === "Completed");
+  }
+  return [];
+};
 
   const filteredAppointments = getFilteredAppointments();
 
+// --- Revenue Calculation: Use bill/totalBill if present, fallback to totalFee ---
+const getAppointmentRevenue = (appt) => {
+  if (appt.totalBill !== undefined) return Number(appt.totalBill) || 0;
+  if (appt.bill !== undefined) return Number(appt.bill) || 0;
+  return Number(appt.totalFee) || 0;
+};
+
+// Total Revenue for selected period
+const totalRevenue = filteredAppointments.reduce((sum, appt) => sum + getAppointmentRevenue(appt), 0);
+
+
   // Patient Revenue Details
   const patientRevenue = {};
-  filteredAppointments.forEach((appt) => {
-    if (appt.patientId) {
-      if (!patientRevenue[appt.patientId]) {
-        patientRevenue[appt.patientId] = { total: 0, count: 0, name: appt.patientName || "Unknown" };
-      }
-      patientRevenue[appt.patientId].total += Number(appt.totalFee) || 0;
-      patientRevenue[appt.patientId].count += 1;
+filteredAppointments.forEach((appt) => {
+  if (appt.patientId) {
+    if (!patientRevenue[appt.patientId]) {
+      patientRevenue[appt.patientId] = { total: 0, count: 0, name: appt.patientName || "Unknown" };
     }
-  });
+    patientRevenue[appt.patientId].total += getAppointmentRevenue(appt);
+    patientRevenue[appt.patientId].count += 1;
+  }
+});
 
   // New vs Returning Patients
   let newCount = 0, returningCount = 0;
@@ -251,8 +360,8 @@ const Analytics = () => {
     else returningCount++;
   });
 
-  // Pie Data: Daily Bookings (Tue-Sat)
-  const pie = { Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0 };
+  // Pie Data: Daily Bookings
+  const pie = { Sunday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0 };
 filteredAppointments.forEach((appt) => {
   if (appt._dateKey) {
     const dateObj = new Date(appt._dateKey);
@@ -449,37 +558,35 @@ const pieDataPeriod = WEEKDAYS.map(day => ({ name: day, value: pie[day] }));
           <div style={{ display: "flex", gap: 24, marginBottom: 32 }}>
             {/* Left Column: 2 widgets */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
-              <div style={{
-                background: "#fff",
-                borderRadius: 16,
-                padding: 24,
-                boxShadow: "0 2px 8px #00000010",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center"
-              }}>
-                <div style={{ fontSize: 18, color: "#888" }}>Total Appointments</div>
-                <div style={{ fontSize: 32, fontWeight: 700, color: "#23201A" }}>
-                  {filteredAppointments.length}
-                </div>
-              </div>
-              <div style={{
-                background: "#fff",
-                borderRadius: 16,
-                padding: 24,
-                boxShadow: "0 2px 8px #00000010",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center"
-              }}>
-                <div style={{ fontSize: 18, color: "#888" }}>Total Revenue</div>
-                <div style={{ fontSize: 32, fontWeight: 700, color: "#23201A" }}>
-                  {formatCurrency(
-                    filteredAppointments.reduce((sum, appt) => sum + (Number(appt.totalFee) || 0), 0)
-                  )}
-                </div>
-              </div>
-            </div>
+  <div style={{
+    background: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    boxShadow: "0 2px 8px #00000010",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center"
+  }}>
+    <div style={{ fontSize: 18, color: "#888" }}>Total Appointments</div>
+    <div style={{ fontSize: 32, fontWeight: 700, color: "#23201A" }}>
+      {filteredAppointments.length}
+    </div>
+  </div>
+  <div style={{
+    background: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    boxShadow: "0 2px 8px #00000010",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center"
+  }}>
+    <div style={{ fontSize: 18, color: "#888" }}>Total Revenue</div>
+    <div style={{ fontSize: 32, fontWeight: 700, color: "#23201A" }}>
+      {formatCurrency(totalRevenue)}
+    </div>
+  </div>
+</div>
             {/* Middle Column: Patient Revenue Details, New/Returning Patients */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
               <div style={{
@@ -535,82 +642,105 @@ const pieDataPeriod = WEEKDAYS.map(day => ({ name: day, value: pie[day] }));
               </div>
             </div>
             {/* Right Column: Daily Patient Bookings Pie */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
-              <div style={{
-                background: "#fff",
-                borderRadius: 16,
-                padding: 24,
-                boxShadow: "0 2px 8px #00000010",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center"
-              }}>
-                <div style={{ fontSize: 18, color: "#888", marginBottom: 8 }}>Daily Patient Bookings (Tue-Sat)</div>
-                <PieChart width={220} height={220}>
-                  <Pie
-                    data={pieDataPeriod}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={90}
-                    fill="#8884d8"
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, percent }) =>
-                      `${name} (${(percent * 100).toFixed(0)}%)`
-                    }
-                  >
-                    {pieDataPeriod.map((entry, idx) => (
-                      <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </div>
-            </div>
-          </div>
+            <div style={{
+  background: "#fff",
+  borderRadius: 16,
+  padding: 24,
+  boxShadow: "0 2px 8px #00000010",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center"
+}}>
+  <div style={{ fontSize: 18, color: "#888", marginBottom: 8 }}>Daily Patient Bookings (Tue-Sat)</div>
+  {/* Use flex row for chart and legend, prevent overlap */}
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+    <PieChart width={220} height={220}>
+      <Pie
+        data={pieDataPeriod}
+        cx="50%"
+        cy="50%"
+        innerRadius={50}
+        outerRadius={90}
+        fill="#8884d8"
+        paddingAngle={2}
+        dataKey="value"
+        label={({ name, percent }) =>
+          `${name} (${(percent * 100).toFixed(0)}%)`
+        }
+      >
+        {pieDataPeriod.map((entry, idx) => (
+          <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+        ))}
+      </Pie>
+      <Tooltip />
+    </PieChart>
+    {/* Custom legend, right side, well spaced */}
+    <div style={{
+      marginLeft: 32,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+      minWidth: 120
+    }}>
+      {pieDataPeriod.map((item, idx) => (
+        <div key={item.name} style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+          <span style={{
+            display: "inline-block",
+            width: 16,
+            height: 16,
+            background: PIE_COLORS[idx % PIE_COLORS.length],
+            marginRight: 8,
+            borderRadius: 4,
+            border: "1px solid #ddd"
+          }} />
+          <span style={{ fontSize: 15, color: "#23201A" }}>{item.name}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+</div>
 
           {/* Revenue Trend Chart (simple dots, no chart lib) */}
-          <div style={{
-            background: "#fff",
-            borderRadius: 16,
-            padding: 24,
-            boxShadow: "0 2px 8px #00000010",
-            marginBottom: 32
-          }}>
-            <h3 style={{ marginBottom: 16 }}>Revenue Trend</h3>
-            <div style={{ width: "100%", height: 220, position: "relative" }}>
-              {/* Simple SVG chart for demonstration */}
-              <svg width="100%" height="200" viewBox="0 0 700 200">
-                {/* Axes */}
-                <line x1="40" y1="10" x2="40" y2="180" stroke="#ccc" />
-                <line x1="40" y1="180" x2="680" y2="180" stroke="#ccc" />
-                {/* Dots */}
-                {revenueTrend.length > 0 && (() => {
-                  const maxRevenue = Math.max(...revenueTrend.map(d => d.revenue), 1);
-                  const minDate = new Date(revenueTrend[0].date);
-                  const maxDate = new Date(revenueTrend[revenueTrend.length - 1].date);
-                  const dateRange = maxDate - minDate || 1;
-                  return revenueTrend.map((d, i) => {
-                    const x = 40 + ((new Date(d.date) - minDate) / dateRange) * (640);
-                    const y = 180 - (d.revenue / maxRevenue) * 160;
-                    return (
-                      <g key={d.date}>
-                        <circle cx={x} cy={y} r={6} fill="#C7A76C" />
-                        <text x={x} y={y - 12} fontSize="12" fill="#23201A" textAnchor="middle">
-                          {formatCurrency(d.revenue)}
-                        </text>
-                        <text x={x} y={190} fontSize="12" fill="#888" textAnchor="middle">
-                          {new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                        </text>
-                      </g>
-                    );
-                  });
-                })()}
-              </svg>
-            </div>
-          </div>
+     <div style={{
+  background: "#fff",
+  borderRadius: 16,
+  padding: 24,
+  boxShadow: "0 2px 8px #00000010",
+  marginBottom: 32
+}}>
+  <h3 style={{ marginBottom: 16 }}>
+    Revenue Trend (
+    {selectedPeriod === "week"
+      ? "Tue-Sun"
+      : "Last 4 Saturdays"}
+    )
+  </h3>
+  <ResponsiveContainer width="100%" height={220}>
+    <LineChart
+      data={chartData}
+      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+    >
+      <CartesianGrid stroke="#eee" strokeDasharray="3 3" />
+      <XAxis dataKey="label" tick={{ fontSize: 13 }} />
+      <YAxis
+        tickFormatter={value => formatCurrency(value)}
+        tick={{ fontSize: 13 }}
+        width={80}
+      />
+      <Tooltip formatter={value => formatCurrency(value)} />
+      <Line
+        type="monotone"
+        dataKey="revenue"
+        stroke="#C7A76C"
+        strokeWidth={3}
+        dot={{ r: 7, stroke: "#C7A76C", strokeWidth: 2, fill: "#fff" }}
+        activeDot={{ r: 9, fill: "#C7A76C" }}
+      />
+    </LineChart>
+  </ResponsiveContainer>
+</div>
+  
 
           {/* Service Tally Table */}
           <div style={{

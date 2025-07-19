@@ -213,65 +213,71 @@ const ManageAppointment = () => {
 
   // Handle edit form submission
   const handleEditFormSubmit = async (formData) => {
-    if (editingAppointmentId) {
-      const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
-        .toISOString()
-        .split("T")[0];
-      const appointmentRef = ref(db, `appointments/${formattedDate}/${editingAppointmentId}`);
+  if (editingAppointmentId) {
+    const formattedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
+    const appointmentRef = ref(db, `appointments/${formattedDate}/${editingAppointmentId}`);
 
-      // Find the original appointment
-      const originalAppointment = appointments.find((appt) => appt.id === editingAppointmentId);
+    // Find the original appointment
+    const originalAppointment = appointments.find((appt) => appt.id === editingAppointmentId);
 
-      try {
-        // Update the appointment in the database
-        await update(appointmentRef, formData);
-
-        // Calculate start and end times
-        const startTimeMinutes =
-          parseInt(originalAppointment.time.split(":")[0], 10) * 60 +
-          parseInt(originalAppointment.time.split(":")[1], 10);
-        const endTimeMinutes = startTimeMinutes + originalAppointment.duration;
-        const formattedStartTime = formatTime(startTimeMinutes);
-        const formattedEndTime = formatTime(endTimeMinutes);
-
-        // Check if the status has changed
-        if (originalAppointment && originalAppointment.status !== formData.status) {
-          let message = "";
-          if (formData.status === "Confirmed") {
-            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
-          } else if (formData.status === "Completed") {
-            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
-          } else if (formData.status === "Pending") {
-            message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
-          }
-
-          // Use uid for notification
-          if (message && originalAppointment.uid) {
-            addNotification(originalAppointment.uid, message);
-          }
-        }
-
-        if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
-          const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
-          if (originalAppointment.uid) {
-            addNotification(originalAppointment.uid, remarksMessage);
-          }
-        }
-
-        // Update the local state
-        setAppointments((prevAppointments) =>
-          prevAppointments.map((appt) =>
-            appt.id === editingAppointmentId ? { ...appt, ...formData } : appt
-          )
-        );
-
-        setEditingAppointmentId(null);
-        setEditFormData({ services: [] });
-      } catch (error) {
-        console.error("Error updating appointment:", error);
+    try {
+      // If status is Completed and bill is provided, save bill as totalBill
+      const updateData = { ...formData };
+      if (formData.status === "Completed" && formData.bill) {
+        updateData.totalBill = Number(formData.bill);
       }
+
+      // Update the appointment in the database
+      await update(appointmentRef, updateData);
+
+      // Calculate start and end times
+      const startTimeMinutes =
+        parseInt(originalAppointment.time.split(":")[0], 10) * 60 +
+        parseInt(originalAppointment.time.split(":")[1], 10);
+      const endTimeMinutes = startTimeMinutes + originalAppointment.duration;
+      const formattedStartTime = formatTime(startTimeMinutes);
+      const formattedEndTime = formatTime(endTimeMinutes);
+
+      // Check if the status has changed
+      if (originalAppointment && originalAppointment.status !== formData.status) {
+        let message = "";
+        if (formData.status === "Confirmed") {
+          message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been confirmed.`;
+        } else if (formData.status === "Completed") {
+          message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} has been completed. Dentist remarks: '${formData.dentistRemarks || "No remarks"}'`;
+        } else if (formData.status === "Pending") {
+          message = `Your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime} status has been updated to pending.`;
+        }
+
+        // Use uid for notification
+        if (message && originalAppointment.uid) {
+          addNotification(originalAppointment.uid, message);
+        }
+      }
+
+      if (originalAppointment && originalAppointment.dentistRemarks !== formData.dentistRemarks) {
+        const remarksMessage = `Your dentist has updated the remarks for your appointment on ${formattedDate} from ${formattedStartTime} to ${formattedEndTime}: '${formData.dentistRemarks || "No remarks"}'`;
+        if (originalAppointment.uid) {
+          addNotification(originalAppointment.uid, remarksMessage);
+        }
+      }
+
+      // Update the local state
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((appt) =>
+          appt.id === editingAppointmentId ? { ...appt, ...updateData } : appt
+        )
+      );
+
+      setEditingAppointmentId(null);
+      setEditFormData({ services: [] });
+    } catch (error) {
+      console.error("Error updating appointment:", error);
     }
-    setShowEditForm(false);
+  }
+  setShowEditForm(false);
   };
 
   // Handle closing the edit form
