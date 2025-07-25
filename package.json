@@ -9,12 +9,14 @@
     "react-calendar": "^5.1.0",
     "react-calendars": "^1.1.2",
     "react-calendly": "^4.3.1",
+    "react-datepicker": "^8.4.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-modal": "^3.16.3",
     "react-router-dom": "^7.2.0",
     "react-scripts": "^5.0.1",
-    "react-select": "^5.10.1"
+    "react-select": "^5.10.1",
+    "recharts": "^3.1.0"
   },
   "scripts": {
     "start": "react-scripts start",
